@@ -190,7 +190,7 @@ def _plot_label(ax, label, color):
     ax.axis((-1, 1, -1, 1))
     ax.axis(False)
     text = format(label, "d")
-    ax.text(0, -0.15, text, color=color, fontsize=32, ha="center", va="center")
+    ax.text(0, -0.17, text, color=color, fontsize=32, ha="center", va="center")
 
 ####
 # Visualizing predictions
