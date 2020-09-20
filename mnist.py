@@ -1,3 +1,4 @@
+import functools
 import gzip
 import math
 
@@ -27,8 +28,8 @@ def show_images(X, y, *, digits=None, size=64):
     Args:
         X: images as a (m, 28, 28) numpy array
         y: labels as a (m,) numpy array
-        digits: (optional) digit or list of digits to show
-        size: (optional) number of samples to show, defaults to 64
+        digits: digit or list of digits to show
+        size: number of samples to show
     """
     # Process data.
     X, y = _filter_images(X, y, digits)
@@ -43,6 +44,42 @@ def show_images(X, y, *, digits=None, size=64):
             continue
         _plot_image(image_axs[0], X[i])
         _plot_true_label(image_axs[1], y[i])
+
+def show_predictions(
+    X, y_true, y_pred, Y_prob,
+    *, true_digits=None, pred_digits=None, size=16):
+    """Shows predictions, including the probability for each digit.
+
+    The two columns are respectively for correct and incorrect predictions.
+
+    Args:
+        X: images as a (m, 28, 28) numpy array
+        y_true: true labels as a (m,) numpy array
+        y_pred: predicted labels as a (m,) numpy array
+        Y_prob: predicted probabilities as a (m, 10) numpy array
+        true_digits: true digit or list of true digits to show
+        pred_digits: predicted digit or list of predicted digits to show
+        size: number of correct and incorrect samples to show
+    """
+    # Process data.
+    X, y_true, y_pred, Y_prob = _filter_predictions(
+        X, y_true, y_pred, Y_prob, true_digits, pred_digits)
+    splits = _split_predictions(X, y_true, y_pred, Y_prob)
+    splits = [_sample_rows(*split, size=size) for split in splits]
+    m_max = max(X.shape[0] for X, _, _, _ in splits)
+
+    # Show data.
+    axs = _create_predictions_subplots(m_max)
+    for i, pred_tf_axs in enumerate(_generate_predictions_axs(axs)):
+        for pred_axs, (X, y_true, y_pred, Y_prob) in zip(pred_tf_axs, splits):
+            m = X.shape[0]
+            if i >= m:
+                [ax.remove() for ax in pred_axs]
+                continue
+            _plot_image(pred_axs[0], X[i])
+            _plot_true_label(pred_axs[1], y_true[i])
+            _plot_predicted_label(pred_axs[2], y_true[i], y_pred[i])
+            _plot_probabilities(pred_axs[3], y_true[i], y_pred[i], Y_prob[i])
 
 ####
 # Data loading
@@ -68,6 +105,24 @@ def _filter_images(X, y, digits):
         return X, y
     mask = np.isin(y, digits)
     return X[mask], y[mask]
+
+def _filter_predictions(X, y_true, y_pred, Y_prob, true_digits, pred_digits):
+    """Filters the predictions based on the true and predicted digits."""
+    masks = [
+        np.isin(y, digits)
+        for y, digits in [(y_true, true_digits), (y_pred, pred_digits)]
+        if digits is not None and (np.isscalar(digits) or len(digits))]
+    if not masks:
+        return X, y_true, y_pred, Y_prob
+    mask = functools.reduce(lambda m1, m2: m1 & m2, masks)
+    return X[mask], y_true[mask], y_pred[mask], Y_prob[mask]
+
+def _split_predictions(X, y_true, y_pred, Y_prob):
+    """Splits the data based on whether the prediction was correct."""
+    t_mask = y_true == y_pred
+    f_mask = ~t_mask
+    split_arrays = [(A[t_mask], A[f_mask]) for A in [X, y_true, y_pred, Y_prob]]
+    return list(zip(*split_arrays))
 
 def _sample_rows(*arrays, size):
     """Samples rows, taking the same rows for each array."""
@@ -136,3 +191,63 @@ def _plot_label(ax, label, color):
     ax.axis(False)
     text = format(label, "d")
     ax.text(0, -0.15, text, color=color, fontsize=32, ha="center", va="center")
+
+####
+# Visualizing predictions
+####
+
+_DIGITS = np.arange(10)
+
+def _create_predictions_subplots(m):
+    """Creates the subplots to visualize m correct and incorrect predictions."""
+    col_widths = (0.5, 0.5, 0.5, 1.5, 0.25, 0.5, 0.5, 0.5, 1.5)
+    axs = _create_packed_subplots(m, col_widths)
+    return _remove_border_columns(axs, 4)
+
+def _generate_predictions_axs(axs):
+    """Generates the list of axes for each pair of predictions."""
+    num_rows = axs.shape[0]
+    for row in range(num_rows):
+        yield axs[row, 0:4], axs[row, 4:8]
+
+def _plot_predicted_label(ax, label, pred):
+    """Plots an "image" of the predicted label."""
+    color = _pred_color(label == pred)
+    _plot_label(ax, pred, color)
+
+def _plot_probabilities(ax, label, pred, prob):
+    """Plots the predicted probability for each digit."""
+    # Set up the axes.
+    ax.set(
+        xlim=(-0.5, 9.5),
+        ylim=(0, 1),
+        xticks=[],
+        yticks=[])
+    ax.spines["left"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["bottom"].set_linewidth(0.5)
+    ax.spines["top"].set_linewidth(0.5)
+
+    # Plots the bars.
+    color = 10 * [_OTHER_COLOR]
+    color[int(label)] = _pred_color(True)
+    color[int(pred)] = _pred_color(pred == label)
+    ax.bar(_DIGITS, prob, color=color, width=1)
+
+    # Add the labels.
+    for digit in _DIGITS:
+        color = "black" if digit == label else _OTHER_COLOR
+        label_text = format(digit, "d")
+        ax.text(digit, 0.8, label_text, color=color, ha="center", va="center")
+
+####
+# Color scheme
+####
+
+_CMAP = plt.get_cmap("coolwarm")
+
+_OTHER_COLOR = "silver"
+
+def _pred_color(correct):
+    """Gets the color for a correct or incorrect prediction."""
+    return _CMAP(0.1) if correct else _CMAP(0.9)

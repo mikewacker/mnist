@@ -28,6 +28,28 @@ class MnistTestCase(unittest.TestCase):
         X_train, _, y_train, _ = mnist.load_mnist()
         np.random.seed(0)
         mnist.show_images(X_train, y_train, **kwds)
+        self._saveAndCompareImage(expected_path)
+
+    def testShowPredictions(self):
+        self._testShowPredictions("testdata/predictions.png")
+
+    def testShowPredictions_Digits(self):
+        self._testShowPredictions(
+            "testdata/predictions-digits.png",
+            true_digits=6, pred_digits=[0, 6])
+
+    def testShowPredictions_Size(self):
+        self._testShowPredictions("testdata/predictions-size.png", size=4)
+
+    def _testShowPredictions(self, expected_path, **kwds):
+        pred_dict = np.load("testdata/predictions.npz")
+        X, y_true, y_pred, Y_Prob = [
+            pred_dict[key] for key in ["X", "y_true", "y_pred", "Y_prob"]]
+        np.random.seed(0)
+        mnist.show_predictions(X, y_true, y_pred, Y_Prob, **kwds)
+        self._saveAndCompareImage(expected_path)
+
+    def _saveAndCompareImage(self, expected_path):
         with tempfile.NamedTemporaryFile() as tmp:
             plt.savefig(tmp.name, format="png")
             self.assertImagesEqual(tmp.name, expected_path)
