@@ -127,8 +127,8 @@ def show_performance(y_true, y_pred):
     starting from both the actual digit and the predicted digit.
 
     Args:
-        y_true: true digits as a (m,) numpy array
-        y_pred: predicted digits as a (m,) numpy array
+        y_true: true labels as a (m,) numpy array
+        y_pred: predicted labels as a (m,) numpy array
     """
     # Process data.
     score, acc, cm = score_predictions(y_true, y_pred)
