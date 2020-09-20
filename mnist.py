@@ -287,7 +287,9 @@ def _plot_probabilities(ax, label, pred, prob):
     for digit in _DIGITS:
         color = "black" if digit == label else _OTHER_COLOR
         label_text = format(digit, "d")
-        ax.text(digit, 0.8, label_text, color=color, ha="center", va="center")
+        ax.text(
+            digit - 0.07, 0.8, label_text, color=color,
+            ha="center", va="center")
 
 ####
 # Color scheme
