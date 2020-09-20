@@ -49,7 +49,7 @@ def preprocess_channel(X):
     X = X.reshape((-1, 28, 28, 1))
     return X / 255
 
-def score(y_true, y_pred):
+def score_predictions(y_true, y_pred):
     """Scores the predictions with a single metric and more detailed metrics.
 
     The single metric is accuracy as the macro-average of recall.
@@ -117,6 +117,29 @@ def show_images(X, y, *, digits=None, size=64):
             continue
         _plot_image(image_axs[0], X[i])
         _plot_true_label(image_axs[1], y[i])
+
+def show_performance(y_true, y_pred):
+    """Shows the overall performance of a model.
+
+    Shows the overall score and the per-digit accuracy,
+    both on a 0-100% scale and a 90-100% scale.
+    Also plots two treemaps of the errors,
+    starting from both the actual digit and the predicted digit.
+
+    Args:
+        y_true: true digits as a (m,) numpy array
+        y_pred: predicted digits as a (m,) numpy array
+    """
+    # Process data.
+    score, acc, cm = score_predictions(y_true, y_pred)
+    title = "Score: {:.2%}".format(score)
+
+    # Show data.
+    axs = _create_performance_subplots()
+    _plot_accuracy(axs[0], title, 0, score, acc)
+    _plot_accuracy(axs[1], "90-100% Range", 0.9, score, acc)
+    _plot_error_treemap(axs[2], "Errors by Actual Digit", cm)
+    _plot_error_treemap(axs[3], "Errors by Predicted Digit", cm.T)
 
 def show_predictions(
     X, y_true, y_pred, Y_prob,
@@ -266,6 +289,94 @@ def _plot_label(ax, label, color):
     ax.text(0, -0.17, text, color=color, fontsize=32, ha="center", va="center")
 
 ####
+# Visualizing performance
+####
+
+def _create_performance_subplots():
+    """Creates the subplots to visualize the performance."""
+    figsize = (6, 6)
+    gridspec_kw = {"height_ratios": (2.5, 2.5, 0.5, 0.5)}
+    _, axs = plt.subplots(
+        4, 1, constrained_layout=True,
+        figsize=figsize, gridspec_kw=gridspec_kw)
+    return axs
+
+def _plot_accuracy(ax, title, min_acc, score, acc):
+    """Plots the overall and per-digit accuracy."""
+    # Set up the axes.
+    ax.set_title(title)
+    ax.axis((min_acc, 1, -0.5, 9.5))
+    ax.invert_yaxis()
+    if min_acc > 0:
+        ax.spines["left"].set_visible(False)
+    else:
+        ax.spines["left"].set_linewidth(0.5)
+    ax.spines["right"].set_visible(0.5)
+    ax.spines["bottom"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+
+    xticks = np.linspace(min_acc, 1, 11)
+    xticklabels = [format(x, ".0%") for x in xticks]
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticklabels)
+    ax.set_yticks(_DIGITS)
+    ax.tick_params(left=False, top=True, width=0.5)
+
+    # Plot the accuracy.
+    color = [_digit_color(digit) for digit in _DIGITS]
+    ax.barh(_DIGITS, acc, color=color, height=1)
+    if score >= min_acc:
+        ax.axvline(score, color=_OTHER_COLOR, lw=0.5)
+
+    # Add the labels.
+    for digit in _DIGITS:
+        x = 0.11 + 0.89 * min_acc
+        y = digit + 0.05
+        value = acc[digit]
+        label = format(value, ".2%")
+        ax.text(x, y, label, ha="right", va="center")
+
+def _plot_error_treemap(ax, title, cm):
+    """Plots a treemap for the errors."""
+    # Set up the axes.
+    ax.set_title(title)
+    ax.axis((0, 1, 0, 2))
+    ax.invert_yaxis()
+    ax.axis(False)
+
+    # Plot the treemap.
+    error = np.sum(cm) - np.sum(cm[_DIGITS, _DIGITS])
+    major_offset = 0
+    minor_offset = 0
+    for digit1 in _DIGITS:
+        for digit2 in _DIGITS:
+            if digit1 == digit2:
+                continue
+            minor_size = cm[digit1, digit2] / error
+            _plot_error_part(ax, 1, digit2, minor_offset, minor_size)
+            minor_offset += minor_size
+        major_size = minor_offset - major_offset
+        _plot_error_part(ax, 0, digit1, major_offset, major_size)
+        major_offset = minor_offset
+
+def _plot_error_part(ax, row, digit, offset, size):
+    """Plots a single part of the error."""
+    # Plot the error part.
+    x = [offset, offset + size]
+    y1 = [row, row]
+    y2 = [row + 1, row + 1]
+    color = _digit_color(digit)
+    ax.fill_between(x, y1, y2, color=color, lw=0)
+
+    # Label the part if it is large enough.
+    if size < 0.03:
+        return
+    x = offset + size / 2
+    y = row + 0.55
+    label = format(digit, "d")
+    ax.text(x, y, label, ha="center", va="center")
+
+####
 # Visualizing predictions
 ####
 
@@ -289,15 +400,13 @@ def _plot_predicted_label(ax, label, pred):
 def _plot_probabilities(ax, label, pred, prob):
     """Plots the predicted probability for each digit."""
     # Set up the axes.
-    ax.set(
-        xlim=(-0.5, 9.5),
-        ylim=(0, 1),
-        xticks=[],
-        yticks=[])
+    ax.axis((-0.5, 9.5, 0, 1))
     ax.spines["left"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["bottom"].set_linewidth(0.5)
     ax.spines["top"].set_linewidth(0.5)
+    ax.set_xticks([])
+    ax.set_yticks([])
 
     # Plots the bars.
     color = 10 * [_OTHER_COLOR]
@@ -307,11 +416,10 @@ def _plot_probabilities(ax, label, pred, prob):
 
     # Add the labels.
     for digit in _DIGITS:
-        color = "black" if digit == label else _OTHER_COLOR
+        x = digit - 0.07
         label_text = format(digit, "d")
-        ax.text(
-            digit - 0.07, 0.8, label_text, color=color,
-            ha="center", va="center")
+        color = "black" if digit == label else _OTHER_COLOR
+        ax.text(x, 0.8, label_text, color=color, ha="center", va="center")
 
 ####
 # Color scheme
@@ -324,3 +432,8 @@ _OTHER_COLOR = "silver"
 def _pred_color(correct):
     """Gets the color for a correct or incorrect prediction."""
     return _CMAP(0.1) if correct else _CMAP(0.9)
+
+def _digit_color(digit):
+    """Gets the color for the digit."""
+    value = (digit + 0.5) / 10
+    return _CMAP(value)

@@ -29,9 +29,9 @@ class MnistTestCase(unittest.TestCase):
         self.assertEqual(np.min(X_train_pre), 0.0)
         self.assertEqual(np.max(X_train_pre), 1.0)
 
-    def testScore(self):
+    def testScorePredictions(self):
         _, y_true, y_pred, _ = self._loadPredictions()
-        score, acc, cm = mnist.score(y_true, y_pred)
+        score, acc, cm = mnist.score_predictions(y_true, y_pred)
 
         score_diff = np.abs(score - 0.9248)
         self.assertLess(score_diff, 5e-5)
@@ -79,6 +79,11 @@ class MnistTestCase(unittest.TestCase):
         mnist.show_images(X_train, y_train, **kwds)
         self._saveAndCompareImage(expected_path)
 
+    def testShowPerformance(self):
+        _, y_true, y_pred, _ = self._loadPredictions()
+        mnist.show_performance(y_true, y_pred)
+        self._saveAndCompareImage("testdata/performance.png")
+
     def testShowPredictions(self):
         self._testShowPredictions("testdata/predictions.png")
 
@@ -91,7 +96,6 @@ class MnistTestCase(unittest.TestCase):
         self._testShowPredictions("testdata/predictions-size.png", size=4)
 
     def _testShowPredictions(self, expected_path, **kwds):
-        pred_dict = np.load("testdata/predictions.npz")
         X, y_true, y_pred, Y_Prob = self._loadPredictions()
         np.random.seed(0)
         mnist.show_predictions(X, y_true, y_pred, Y_Prob, **kwds)
