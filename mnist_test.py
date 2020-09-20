@@ -29,6 +29,24 @@ class MnistTestCase(unittest.TestCase):
         self.assertEqual(np.min(X_train_pre), 0.0)
         self.assertEqual(np.max(X_train_pre), 1.0)
 
+    def testScore(self):
+        _, y_true, y_pred, _ = self._loadPredictions()
+        score, acc, cm = mnist.score(y_true, y_pred)
+
+        score_diff = np.abs(score - 0.9248)
+        self.assertLess(score_diff, 5e-5)
+
+        expected_acc = np.array([
+            0.9786, 0.9789, 0.8973, 0.9079, 0.9308,
+            0.8778, 0.9520, 0.9241, 0.8840, 0.9167,
+        ])
+        acc_diff = np.abs(acc - expected_acc)
+        self.assertLess(np.max(acc_diff), 5e-5)
+
+        cm_sum = np.sum(cm, axis=1)
+        cm_diff = np.abs(cm_sum - 1)
+        self.assertLess(np.max(cm_diff), 1e-8)
+
     def testToPred(self):
         Y_prob = np.array([
             [0.05, 0.55, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05],
@@ -74,11 +92,14 @@ class MnistTestCase(unittest.TestCase):
 
     def _testShowPredictions(self, expected_path, **kwds):
         pred_dict = np.load("testdata/predictions.npz")
-        X, y_true, y_pred, Y_Prob = [
-            pred_dict[key] for key in ["X", "y_true", "y_pred", "Y_prob"]]
+        X, y_true, y_pred, Y_Prob = self._loadPredictions()
         np.random.seed(0)
         mnist.show_predictions(X, y_true, y_pred, Y_Prob, **kwds)
         self._saveAndCompareImage(expected_path)
+
+    def _loadPredictions(self):
+        pred_dict = np.load("testdata/predictions.npz")
+        return [pred_dict[key] for key in ["X", "y_true", "y_pred", "Y_prob"]]
 
     def _saveAndCompareImage(self, expected_path):
         with tempfile.NamedTemporaryFile() as tmp:

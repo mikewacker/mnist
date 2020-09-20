@@ -3,9 +3,12 @@ import gzip
 import math
 
 import numpy as np
+from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
 import idx
+
+_DIGITS = np.arange(10)
 
 def load_mnist():
     """Loads the training and test sets for the MNIST data.
@@ -45,6 +48,27 @@ def preprocess_channel(X):
     """
     X = X.reshape((-1, 28, 28, 1))
     return X / 255
+
+def score(y_true, y_pred):
+    """Scores the predictions with a single metric and more detailed metrics.
+
+    The single metric is accuracy as the macro-average of recall.
+
+    Args:
+        y_true: true labels as a (m,) numpy array
+        y_pred: predicted labels as a (m,) numpy array
+
+    Returns:
+        score: accuracy as a macro-average of recall
+        acc: accuracy/recall for each digit as a (10,) numpy array
+        cm: row-normalized confusion matrix as a (10, 10) numpy array
+    """
+    cm = confusion_matrix(y_true, y_pred)
+    cm_norm = np.sum(cm, axis=1, keepdims=True)
+    cm = cm / cm_norm
+    acc = cm[_DIGITS, _DIGITS]
+    score = np.mean(acc)
+    return score, acc, cm
 
 def to_pred(Y_prob):
     """Converts probabilistic predictions to discrete predictions.
@@ -244,8 +268,6 @@ def _plot_label(ax, label, color):
 ####
 # Visualizing predictions
 ####
-
-_DIGITS = np.arange(10)
 
 def _create_predictions_subplots(m):
     """Creates the subplots to visualize m correct and incorrect predictions."""
