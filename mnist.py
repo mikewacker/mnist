@@ -197,7 +197,7 @@ def _load_idx(path):
 
 def _filter_images(X, y, digits):
     """Filters the images based on the digit."""
-    if digits is None:
+    if not _has_digits_filter(digits):
         return X, y
     mask = np.isin(y, digits)
     return X[mask], y[mask]
@@ -207,11 +207,17 @@ def _filter_predictions(X, y_true, y_pred, Y_prob, true_digits, pred_digits):
     masks = [
         np.isin(y, digits)
         for y, digits in [(y_true, true_digits), (y_pred, pred_digits)]
-        if digits is not None and (np.isscalar(digits) or len(digits))]
+        if _has_digits_filter(digits)]
     if not masks:
         return X, y_true, y_pred, Y_prob
     mask = functools.reduce(lambda m1, m2: m1 & m2, masks)
     return X[mask], y_true[mask], y_pred[mask], Y_prob[mask]
+
+def _has_digits_filter(digits):
+    """Determines if the digits filter is enabled."""
+    if digits is None:
+        return False
+    return np.isscalar(digits) or len(digits)
 
 def _split_predictions(X, y_true, y_pred, Y_prob):
     """Splits the data based on whether the prediction was correct."""
