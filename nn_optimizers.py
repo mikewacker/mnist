@@ -1,5 +1,115 @@
 import numpy as np
 
+def gradient_descent():
+    """Creates an optimizer using gradient descent."""
+    return _Optimizer("gradient_descent", _GradientDescent)
+
+def adam(*, beta1=0.9, beta2=0.999, epsilon=1e-8):
+    """Creates an optimizer using Adam.
+
+    Args:
+        beta1: exponential decay rate for the first moment estimates
+        beta2: exponential decay rate for the second moment estimates
+        epsilon: small constant to prevent division by zero
+    """
+    return _Optimizer("adam", _Adam, beta1, beta2, epsilon)
+
+"""
+To create a new optimizer, you only need to implement a new stepper.
+A stepper must implement the following properties and methods:
+
+*   __init__(shape, *args)
+*   state [read-write]
+*   step(dW)
+
+Notes:
+
+*   One stepper will be created for each numpy array of weights.
+*   state is a tuple of numpy arrays that is used for persistence.
+*   The optimizer will invoke step() and scale each step by the learning rate.
+
+To create an optimizer, you just need to invoke its constructor:
+
+*   _Optimizer(name, stepper_type, *args)
+
+Additional args will be passed through to the stepper's constructor.
+The optimizer will create one stepper for each numpy array of weights.
+"""
+
+####
+# Optimizer
+####
+
+class _Optimizer(object):
+    """Optimizes weights for all layers."""
+
+    def __init__(self, name, stepper_type, *args):
+        """Initializers the optimizer."""
+        self._name = name
+        self._stepper_type = stepper_type
+        self._args = args
+
+    def init_steppers(self, layers):
+        """Initializes the steppers for all layers."""
+        self._all_steppers = [
+            self._init_layer_steppers(layer)
+            for layer in layers]
+
+    def load_state(self, nn_dict):
+        """Loads the state from a dictionary."""
+        for index, layer_steppers in enumerate(self._all_steppers):
+            for W_index, stepper in enumerate(layer_steppers):
+                self._load_stepper_state(nn_dict, index, W_index, stepper)
+
+    def save_state(self, nn_dict):
+        """Saves the state to a dictionary."""
+        for index, layer_steppers in enumerate(self._all_steppers):
+            for W_index, stepper in enumerate(layer_steppers):
+                self._save_stepper_state(nn_dict, index, W_index, stepper)
+
+    def update_weights(self, index, layer, grads, learning_rate):
+        """Updates the weights for a layer."""
+        steppers = self._all_steppers[index]
+        weights = []
+        for stepper, W, dW in zip(steppers, layer.weights, grads):
+            step = stepper.step(dW)
+            W = W - learning_rate * step
+            weights.append(W)
+        layer.weights = tuple(weights)
+
+    def _init_layer_steppers(self, layer):
+        """Initializes the steppers for a layer."""
+        return [
+            self._stepper_type(W.shape, *self._args)
+            for W in layer.weights]
+
+    def _load_stepper_state(self, nn_dict, index, W_index, stepper):
+        """Loads the state for a stepper from a dictionary."""
+        state = []
+        for S_index, _ in enumerate(stepper.state):
+            key = self._state_key(index, W_index, S_index)
+            S = nn_dict.get(key, None)
+            self._check_loaded_S(key, S)
+            state.append(S)
+        stepper.state = tuple(state)
+
+    def _check_loaded_S(self, key, S):
+        """Checks the state that was loaded."""
+        if S is None:
+            msg = "{:s} not found".format(key)
+            raise ValueError(msg)
+
+    def _save_stepper_state(self, nn_dict, index, W_index, stepper):
+        """Saves the state for a stepper to a dictionary."""
+        for S_index, S in enumerate(stepper.state):
+            key = self._state_key(index, W_index, S_index)
+            nn_dict[key] = S
+
+    def _state_key(self, index, W_index, S_index):
+        """Gets the dictionary key for the state."""
+        return "layer {:d}: optimizer-{:s}[{:d}][{:d}]".format(
+            index + 1, self._name, W_index, S_index)
+
 ####
 # Steppers
 ####
@@ -9,17 +119,7 @@ class _GradientDescent(object):
 
     def __init__(self, shape):
         """Initializes the stepper."""
-        pass
-
-    @property
-    def state(self):
-        """Gets the state."""
-        return ()
-
-    @state.setter
-    def state(self, _):
-        """Sets the state."""
-        pass
+        self.state = ()
 
     def step(self, dW):
         """Takes a step."""

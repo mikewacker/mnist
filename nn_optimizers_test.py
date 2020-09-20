@@ -5,6 +5,72 @@ import numpy as np
 
 class NNOptimizerTestCase(unittest.TestCase):
 
+    def testGradientDescentOptimizer(self):
+        optimizer = nn_optimizers.gradient_descent()
+        layer = MockLayer()
+        optimizer.init_steppers([layer])
+
+        dW, _, _ = self._createGradients()
+        W_prev = layer.weights[0]
+        optimizer.update_weights(0, layer, (dW,), 0.01)
+
+        expected_W = W_prev - 0.01 * dW
+        self.assertArraysEqual(layer.weights[0], expected_W)
+
+    def testAdamOptimizer(self):
+        optimizer = nn_optimizers.adam()
+        layer = MockLayer()
+        optimizer.init_steppers([layer])
+
+        dW1, dW2, dW3 = self._createGradients()
+        optimizer.update_weights(0, layer, (dW1,), 0.01)
+        optimizer.update_weights(0, layer, (dW2,), 0.01)
+        W_prev = layer.weights[0]
+        optimizer.update_weights(0, layer, (dW3,), 0.01)
+
+        expected_step = self._getExpectedAdamStep(dW1, dW2, dW3)
+        expected_W = W_prev - 0.01 * expected_step
+        self.assertArraysEqual(layer.weights[0], expected_W)
+
+    def testOptimizerPersistence(self):
+        optimizer1 = nn_optimizers.adam()
+        optimizer2 = nn_optimizers.adam()
+        layer = MockLayer()
+        optimizer1.init_steppers([layer])
+        optimizer2.init_steppers([layer])
+        nn_dict = {}
+
+        dW1, dW2, dW3 = self._createGradients()
+        optimizer1.update_weights(0, layer, (dW1,), 0.01)
+        optimizer1.update_weights(0, layer, (dW2,), 0.01)
+        optimizer1.save_state(nn_dict)
+        optimizer2.load_state(nn_dict)
+        W_prev = layer.weights[0]
+        optimizer2.update_weights(0, layer, (dW3,), 0.01)
+
+        expected_step = self._getExpectedAdamStep(dW1, dW2, dW3)
+        expected_W = W_prev - 0.01 * expected_step
+        self.assertArraysEqual(layer.weights[0], expected_W)
+        expected_keys = [
+            "layer 1: optimizer-adam[0][0]",
+            "layer 1: optimizer-adam[0][1]",
+            "layer 1: optimizer-adam[0][2]",
+        ]
+        self.assertCountEqual(nn_dict.keys(), expected_keys)
+
+    def testOptimizerPersistence_Stateless(self):
+        optimizer1 = nn_optimizers.gradient_descent()
+        optimizer2 = nn_optimizers.gradient_descent()
+        layer = MockLayer()
+        optimizer1.init_steppers([layer])
+        optimizer2.init_steppers([layer])
+        nn_dict = {}
+
+        optimizer1.save_state(nn_dict)
+        optimizer2.load_state(nn_dict)
+
+        self.assertFalse(nn_dict)
+
     def testGradientDescentStep(self):
         stepper = nn_optimizers._GradientDescent((2, 2))
 
@@ -66,3 +132,9 @@ class NNOptimizerTestCase(unittest.TestCase):
     def assertArraysEqual(self, A, expected_A):
         A_diff = np.abs(A - expected_A)
         self.assertLess(np.max(A_diff), 1e-8)
+
+class MockLayer(object):
+
+    def __init__(self):
+        W = np.array([[2.0, 3.0], [4.0, 1.0]])
+        self.weights = (W,)
