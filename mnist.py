@@ -22,6 +22,31 @@ def load_mnist():
     y_test = _load_idx(_Y_TEST_PATH)
     return X_train, X_test, y_train, y_test
 
+def to_pred(Y_prob):
+    """Converts probabilistic predictions to discrete predictions.
+
+    Args:
+        Y_prob: predicted probabilities as a (m, 10) numpy array
+
+    Returns:
+        predicted labels as a (m,) numpy array
+    """
+    return np.argmax(Y_prob, axis=1)
+
+def to_onehot_prob(y_pred):
+    """Converts discrete predictions to (one-hot) probabilistic predictions.
+
+    Args:
+        y_pred: predicted labels as a (m,) numpy array
+
+    Returns:
+        predicted probabilities as a (m, 10) numpy array
+    """
+    m = y_pred.shape[0]
+    Y_prob = np.zeros((m, 10))
+    Y_prob[np.arange(m), y_pred] = 1.0
+    return Y_prob
+
 def show_images(X, y, *, digits=None, size=64):
     """Shows images and their labels.
 

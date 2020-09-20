@@ -15,6 +15,23 @@ class MnistTestCase(unittest.TestCase):
         self.assertEqual(y_train.shape, (60000,))
         self.assertEqual(y_test.shape, (10000,))
 
+    def testToPred(self):
+        Y_prob = np.array([
+            [0.05, 0.55, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05],
+            [0.01, 0.05, 0.01, 0.01, 0.05, 0.01, 0.80, 0.05, 0.01, 0.05],
+        ])
+        y_pred = mnist.to_pred(Y_prob)
+        self.assertTrue((y_pred == np.array([1, 6])).all())
+
+    def testToOneHotProb(self):
+        y_pred = np.array([2, 8])
+        Y_prob = mnist.to_onehot_prob(y_pred)
+        Y_prob_expected = np.array([
+            [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        ])
+        self.assertTrue((Y_prob == Y_prob_expected).all())
+
     def testShowImages(self):
         self._testShowImages("testdata/images.png")
 
