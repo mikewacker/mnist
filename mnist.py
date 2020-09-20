@@ -22,6 +22,30 @@ def load_mnist():
     y_test = _load_idx(_Y_TEST_PATH)
     return X_train, X_test, y_train, y_test
 
+def preprocess_flat(X):
+    """Flattens the images and scales them from 0.0 to 1.0.
+
+    Args:
+        X: images as a (m, 28, 28) numpy array
+
+    Returns:
+        X: scaled images as a (m, 784) numpy array
+    """
+    X = X.reshape((-1, 784))
+    return X / 255
+
+def preprocess_channel(X):
+    """Converts the images to 1 channel and scales them from 0.0 to 1.0.
+
+    Args:
+        X: images as a (m, 28, 28) numpy array
+
+    Returns:
+        X: scaled images as a (m, 28, 28, 1) numpy array
+    """
+    X = X.reshape((-1, 28, 28, 1))
+    return X / 255
+
 def to_pred(Y_prob):
     """Converts probabilistic predictions to discrete predictions.
 

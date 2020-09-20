@@ -15,6 +15,20 @@ class MnistTestCase(unittest.TestCase):
         self.assertEqual(y_train.shape, (60000,))
         self.assertEqual(y_test.shape, (10000,))
 
+    def testPreprocessFlat(self):
+        X_train, _, _, _ = mnist.load_mnist()
+        X_train_pre = mnist.preprocess_flat(X_train)
+        self.assertEqual(X_train_pre.shape, (60000, 784))
+        self.assertEqual(np.min(X_train_pre), 0.0)
+        self.assertEqual(np.max(X_train_pre), 1.0)
+
+    def testPreprocessChannel(self):
+        X_train, _, _, _ = mnist.load_mnist()
+        X_train_pre = mnist.preprocess_channel(X_train)
+        self.assertEqual(X_train_pre.shape, (60000, 28, 28, 1))
+        self.assertEqual(np.min(X_train_pre), 0.0)
+        self.assertEqual(np.max(X_train_pre), 1.0)
+
     def testToPred(self):
         Y_prob = np.array([
             [0.05, 0.55, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05],
