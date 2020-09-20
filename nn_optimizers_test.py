@@ -6,10 +6,12 @@ import numpy as np
 class NNOptimizerTestCase(unittest.TestCase):
 
     def testGradientDescentStep(self):
+        stepper = nn_optimizers._GradientDescent((2, 2))
+
         dW, _, _ = self._createGradients()
-        stepper = nn_optimizers._GradientDescent(dW.shape)
         step = stepper.step(dW)
-        self.assertStepsEqual(step, dW)
+
+        self.assertArraysEqual(step, dW)
 
     def testGradientDescentEmptyState(self):
         stepper = nn_optimizers._GradientDescent((2, 2))
@@ -17,25 +19,29 @@ class NNOptimizerTestCase(unittest.TestCase):
         stepper.state = ()
 
     def testAdamStep(self):
+        stepper = nn_optimizers._Adam((2, 2), 0.9, 0.999, 1e-8)
+
         dW1, dW2, dW3 = self._createGradients()
-        stepper = nn_optimizers._Adam(dW1.shape, 0.9, 0.999, 1e-8)
         stepper.step(dW1)
         stepper.step(dW2)
         step = stepper.step(dW3)
+
         expected_step = self._getExpectedAdamStep(dW1, dW2, dW3)
-        self.assertStepsEqual(step, expected_step)
+        self.assertArraysEqual(step, expected_step)
 
     def testAdamStep_Persistence(self):
+        stepper1 = nn_optimizers._Adam((2, 2), 0.9, 0.999, 1e-8)
+        stepper2 = nn_optimizers._Adam((2, 2), 0.9, 0.999, 1e-8)
+
         dW1, dW2, dW3 = self._createGradients()
-        stepper1 = nn_optimizers._Adam(dW1.shape, 0.9, 0.999, 1e-8)
         stepper1.step(dW1)
         stepper1.step(dW2)
         state = stepper1.state
-        stepper2 = nn_optimizers._Adam(dW1.shape, 0.9, 0.999, 1e-8)
         stepper2.state = state
         step = stepper2.step(dW3)
+
         expected_step = self._getExpectedAdamStep(dW1, dW2, dW3)
-        self.assertStepsEqual(step, expected_step)
+        self.assertArraysEqual(step, expected_step)
 
     def _createGradients(self):
         dW1 = np.array([[1.0, 2.0], [3.0, 4.0]])
@@ -57,6 +63,6 @@ class NNOptimizerTestCase(unittest.TestCase):
         step = vdW_bc / (np.sqrt(sdW_bc) + 1e-8)
         return step
 
-    def assertStepsEqual(self, step, expected_step):
-        step_diff = np.abs(step - expected_step)
-        self.assertLess(np.max(step_diff), 1e-8)
+    def assertArraysEqual(self, A, expected_A):
+        A_diff = np.abs(A - expected_A)
+        self.assertLess(np.max(A_diff), 1e-8)
