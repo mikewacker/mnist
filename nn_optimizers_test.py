@@ -3,7 +3,7 @@ import nn_optimizers
 
 import numpy as np
 
-class NNOptimizerTestCase(unittest.TestCase):
+class NNOptimizersTestCase(unittest.TestCase):
 
     def testGradientDescentOptimizer(self):
         optimizer = nn_optimizers.gradient_descent()
