@@ -67,14 +67,14 @@ def _merge_arrays(arrays, A_index, A):
 
 def _compute_diff(grads, grads_approx):
     """Computes the difference between the gradients and their approximation."""
-    grad = _flatten(*grads)
-    grad_approx = _flatten(*grads_approx)
+    grad = _flatten(grads)
+    grad_approx = _flatten(grads_approx)
     diff = np.linalg.norm(grad_approx - grad)
     diff_norm = np.linalg.norm(grad_approx) + np.linalg.norm(grad)
     diff /= diff_norm
     return diff
 
-def _flatten(*arrays):
+def _flatten(arrays):
     """Flattens the arrays into a single vector."""
     sizes = [np.prod(np.array(A.shape)) for A in arrays]
     m = sum(sizes)
