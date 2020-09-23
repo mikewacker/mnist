@@ -22,6 +22,29 @@ def multiclass_output(C):
         raise ValueError(msg)
     return _Output(C)
 
+"""
+An activation must implement the following methods:
+
+*   forward(Z)
+*   backward(dA)
+
+An output is an activation that must also implement the following properties:
+
+*   is_multiclass [read-only]
+*   C [read-only]
+*   Y [read-write]
+*   cost [read-only]
+*   pred [read-only]
+*   prob [read-only]
+
+Notes:
+
+*   Y's shape is (m, 1), (m, C) respectively for binary and multiclass outputs.
+*   prob's shape is (m,), (m, C) respectively for binary and multiclass outputs.
+*   Y must be set to call cost or backward().
+*   The argument for backward() is ignored for an output.
+"""
+
 ####
 # Activations
 ####
