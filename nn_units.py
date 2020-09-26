@@ -1,5 +1,9 @@
 import numpy as np
 
+def dense(n_prev, n):
+    """Creates a dense, fully-connected unit."""
+    return _DenseUnit(n_prev, n)
+
 ####
 # Base unit
 ####
@@ -86,3 +90,61 @@ class _BaseUnit(object):
             msg = "{:s} expects shape {}, got {}".format(
                 name, W_prev.shape, W.shape)
             raise ValueError(msg)
+
+####
+# Units
+####
+
+class _DenseUnit(_BaseUnit):
+    """Dense, fully-connected unit."""
+
+    def __init__(self, n_prev, n):
+        """Initializes the unit."""
+        shape_in = (n_prev,)
+        shape_out = (n,)
+        weights = _DenseUnit._init_weights(n_prev, n)
+        super().__init__(shape_in, shape_out, weights)
+
+    def forward(self, A_prev):
+        """Feeds the inputs forward."""
+        W, b = self.weights
+
+        # Feed forward.
+        Z = A_prev @ W + b
+
+        # Cache and return.
+        self._A_prev = A_prev
+        return Z
+
+    def backward(self, dZ, chained):
+        """Back-propagates the output gradients."""
+        W, _ = self.weights
+
+        # Retrieve from cache.
+        A_prev = self._A_prev
+
+        # Back-propagate to weights.
+        dW = A_prev.T @ dZ
+        db = np.sum(dZ, axis=0, keepdims=True)
+
+        # Back-propagate to inputs.
+        dA_prev = dZ @ W.T if chained else None
+
+        return dA_prev, (dW, db)
+
+    @staticmethod
+    def _init_weights(n_prev, n):
+        """Initializes the weights."""
+        W_shape = (n_prev, n)
+        W = _glorot_normal_initialization(W_shape, n_prev, n)
+        b = np.zeros((1, n))
+        return W, b
+
+####
+# Weight initialization
+####
+
+def _glorot_normal_initialization(shape, fan_in, fan_out):
+    """Initializes weights using Glorot normal initialization."""
+    std = np.sqrt(2 / (fan_in + fan_out))
+    return np.random.normal(0, std, shape)
