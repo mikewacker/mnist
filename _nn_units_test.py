@@ -242,16 +242,18 @@ class NNUnitsTestCase(unittest.TestCase):
         return A_prev
 
     def _unitCost(self, A_prev, *weights):
-        self._unit.weights = weights
-        Z = self._unit.forward(A_prev)
+        unit = self._unit
+        unit.weights = weights
+        Z = unit.forward(A_prev)
         cost = np.sum(Z)
         return cost
 
     def _unitGradients(self, A_prev, *weights):
-        self._unit.weights = weights
-        Z = self._unit.forward(A_prev)
+        unit = self._unit
+        unit.weights = weights
+        Z = unit.forward(A_prev)
         dZ = np.ones(Z.shape)
-        dA_prev, grads = self._unit.backward(dZ, True)
+        dA_prev, grads = unit.backward(dZ, True)
         return (dA_prev, *grads)
 
     ####

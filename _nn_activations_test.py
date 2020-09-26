@@ -46,14 +46,16 @@ class NNActivationsTestCase(unittest.TestCase):
         return Z
 
     def _activationCost(self, Z):
-        A = self._activation.forward(Z)
+        activation = self._activation
+        A = activation.forward(Z)
         cost = np.sum(A)
         return cost
 
     def _activationGradients(self, Z):
-        A = self._activation.forward(Z)
+        activation = self._activation
+        A = activation.forward(Z)
         dA = np.ones(A.shape)
-        dZ = self._activation.backward(dA)
+        dZ = activation.backward(dA)
         return (dZ,)
 
     ####
@@ -128,13 +130,14 @@ class NNActivationsTestCase(unittest.TestCase):
         self.assertLess(diff, 1e-7)
 
     def _outputCost(self, Z):
-        self._output.forward(Z)
-        cost = self._output.cost
-        return cost
+        output = self._output
+        output.forward(Z)
+        return output.cost
 
     def _outputGradients(self, Z):
-        self._output.forward(Z)
-        dZ = self._output.backward(None)
+        output = self._output
+        output.forward(Z)
+        dZ = output.backward(None)
         return (dZ,)
 
     ####
