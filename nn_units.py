@@ -193,18 +193,18 @@ class _MaxPool2DUnit(_BaseUnit):
         mask = np.empty(A_prev.shape, dtype=bool)
         Z = np.empty((m, *self.shape_out))
 
-        # Iterate over each output position.
-        n_H, n_W, _ = self.shape_out
+        # Grab slices of the input, mask, and output.
         for h, w, h1_prev, h2_prev, w1_prev, w2_prev in _positions_2d(Z, f, s):
-
-            # Pool a slice of input to the current position.
             A_prev_slice = A_prev[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+            mask_slice = mask[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+            Z_slice = Z[:, h:h+1, w:w+1, :]
+
+            # Pool the input slice.
             A_prev_slice_max = np.max(A_prev_slice, axis=(1, 2), keepdims=True)
-            Z[:, h:h+1, w:w+1, :] = A_prev_slice_max
+            Z_slice[:] = A_prev_slice_max
 
             # Set a slice of the mask.
             # Duplicate maxes are very unlikely and have minimal impact.
-            mask_slice = mask[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
             mask_slice[:] = (A_prev_slice - A_prev_slice_max) == 0.0
 
         # Cache and return.
@@ -224,14 +224,13 @@ class _MaxPool2DUnit(_BaseUnit):
         # Retrieve from cache.
         mask = self._mask
 
-        # Iterate over each output position.
-        n_H, n_W, _ = self.shape_out
+        # Grab slices of the output, mask, and input.
         for h, w, h1_prev, h2_prev, w1_prev, w2_prev in _positions_2d(dZ, f, s):
-
-            # Back-propagate from the current position to an input slice.
             dZ_slice = dZ[:, h:h+1, w:w+1, :]
             mask_slice = mask[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
             dA_prev_slice = dA_prev[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+
+            # Back-propagate from the current position to the input slice.
             dA_prev_slice[:] = dZ_slice * mask_slice
 
         return dA_prev, ()
