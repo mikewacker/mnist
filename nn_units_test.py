@@ -1,4 +1,5 @@
 import unittest
+import numpy.testing as npt
 import nn_units
 
 import numpy as np
@@ -102,8 +103,8 @@ class NNUnitsTestCase(unittest.TestCase):
         unit = nn_units.dense(3, 2)
         unit.weights = (W, b)
         Z = unit.forward(A_prev)
-        Z_expected = np.array([[15., 12.], [11., 16.]])
-        self.assertTrue((Z == Z_expected).all())
+        expected_Z = np.array([[15., 12.], [11., 16.]])
+        npt.assert_almost_equal(Z, expected_Z)
 
     def testDenseUnit_UnchainedBackward(self):
         unit = nn_units.dense(4, 2)
@@ -121,7 +122,7 @@ class NNUnitsTestCase(unittest.TestCase):
         dA_prev_unchained, grads_unchained = unit.backward(dZ, False)
         self.assertIsNone(dA_prev_unchained)
         for dW, dW_unchained in zip(grads, grads_unchained):
-            self.assertTrue((dW == dW_unchained).all())
+            npt.assert_equal(dW, dW_unchained)
 
     def _testUnit_GradientCheck(self, unit):
         A_prev = self._createAPrev(unit)

@@ -1,4 +1,5 @@
 import unittest
+import numpy.testing as npt
 import nn_activations
 
 import numpy as np
@@ -9,10 +10,10 @@ class NNActivationsTestCase(unittest.TestCase):
 
     def testReluActivation_Forward(self):
         activation = nn_activations.activation("relu")
-        Z = np.array([[1.0, -2.0], [0.0, 0.25]])
+        Z = np.array([[1., -2.], [0., 0.25]])
         A = activation.forward(Z)
-        A_expected = np.array([[1.0, 0.0], [0.0, 0.25]])
-        self.assertTrue((A == A_expected).all())
+        expected_A = np.array([[1., 0.], [0., 0.25]])
+        npt.assert_almost_equal(A, expected_A)
 
     def testReluActivation_GradientCheck(self):
         self._testActivation_GradientCheck("relu")
@@ -29,11 +30,16 @@ class NNActivationsTestCase(unittest.TestCase):
 
     def _testActivation_GradientCheck(self, fn):
         self._activation = nn_activations.activation(fn)
-        np.random.seed(195262)
-        Z = np.random.normal(0, 1, (3, 3))
+        Z = self._createZ(3)
         diff, _, _ = gradient_checking.check(
             self._activationCost, self._activationGradients, Z)
         self.assertLess(diff, 1e-7)
+
+    def _createZ(self, num_cols):
+        np.random.seed(195262)
+        Z_shape = (3, num_cols)
+        Z = np.random.normal(0, 1, Z_shape)
+        return Z
 
     def _activationCost(self, Z):
         A = self._activation.forward(Z)
@@ -53,15 +59,15 @@ class NNActivationsTestCase(unittest.TestCase):
 
     def testBinaryOutput_Predict(self):
         output = nn_activations.binary_output()
-        Z = np.log(np.array([[3.0], [1.0], [0.25]]))
+        Z = np.log(np.array([[3.], [1.], [0.25]]))
         expected_pred = np.array([1, 0, 0])
         expected_prob = np.array([0.75, 0.5, 0.2])
         self._testOutput_Predict(output, Z, expected_pred, expected_prob)
 
     def testBinaryOutput_GradientCheck(self):
-        self._output = nn_activations.binary_output()
-        self._output.Y = np.array([[0.0], [1.0], [0.0]])
-        self._testOutput_GradientCheck(1)
+        output = nn_activations.binary_output()
+        output.Y = np.array([[0.], [1.], [0.]])
+        self._testOutput_GradientCheck(output)
 
     def testMulticlassOutput_Properties(self):
         output = nn_activations.multiclass_output(3)
@@ -70,18 +76,16 @@ class NNActivationsTestCase(unittest.TestCase):
 
     def testMulticlassOutput_Predict(self):
         output = nn_activations.multiclass_output(3)
-        Z = np.log(np.array(
-            [[1.0, 2.0, 1.0], [5.0, 3.0, 2.0], [1.0, 1.0, 3.0]]))
+        Z = np.log(np.array([[1., 2., 1.], [5., 3., 2.], [1., 1., 3.]]))
         expected_pred = np.array([1, 0, 2])
         expected_prob = np.array(
             [[0.25, 0.50, 0.25], [0.5, 0.3, 0.2], [0.2, 0.2, 0.6]])
         self._testOutput_Predict(output, Z, expected_pred, expected_prob)
 
     def testMulticlassOutput_GradientCheck(self):
-        self._output = nn_activations.multiclass_output(3)
-        self._output.Y = np.array(
-            [[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
-        self._testOutput_GradientCheck(3)
+        output = nn_activations.multiclass_output(3)
+        output.Y = np.array([[0., 1., 0.], [1., 0., 0.], [0., 0., 1.]])
+        self._testOutput_GradientCheck(output)
 
     def testMulticlasOutputError_IllegalC(self):
         with self.assertRaises(ValueError):
@@ -103,13 +107,14 @@ class NNActivationsTestCase(unittest.TestCase):
         pred = output.pred
         prob = output.prob
         self.assertEqual(pred.shape, expected_pred.shape)
-        self.assertTrue((pred == expected_pred).all())
+        npt.assert_almost_equal(pred, expected_pred)
         self.assertEqual(prob.shape, expected_prob.shape)
-        self.assertArraysEqual(prob, expected_prob)
+        npt.assert_almost_equal(prob, expected_prob)
 
-    def _testOutput_GradientCheck(self, num_cols):
-        np.random.seed(149773)
-        Z = np.random.normal(0, 1, (3, num_cols))
+    def _testOutput_GradientCheck(self, output):
+        num_cols = output.C if output.is_multiclass else 1
+        Z = self._createZ(num_cols)
+        self._output = output
         diff, _, _ = gradient_checking.check(
             self._outputCost, self._outputGradients, Z)
         self.assertLess(diff, 1e-7)
@@ -125,17 +130,13 @@ class NNActivationsTestCase(unittest.TestCase):
         return (dZ,)
 
     def testSigmoid(self):
-        log_odds = np.log(np.array([[3.0, 4.0], [1.0, 0.25]]))
+        log_odds = np.log(np.array([[3., 4.], [1., 0.25]]))
         A = nn_activations._sigmoid(log_odds)
         expected_prob = np.array([[0.75, 0.80], [0.50, 0.20]])
-        self.assertArraysEqual(A, expected_prob)
+        npt.assert_almost_equal(A, expected_prob)
 
     def testSoftmax(self):
-        log_odds = np.log(np.array([[1.0, 3.0, 1.0], [2.0, 5.0, 3.0]]))
+        log_odds = np.log(np.array([[1., 3., 1.], [2., 5., 3.]]))
         A = nn_activations._softmax(log_odds)
         expected_prob = np.array([[0.2, 0.6, 0.2], [0.2, 0.5, 0.3]])
-        self.assertArraysEqual(A, expected_prob)
-
-    def assertArraysEqual(self, A, expected_A):
-        A_diff = np.abs(A - expected_A)
-        self.assertLess(np.max(A_diff), 1e-8)
+        npt.assert_almost_equal(A, expected_prob)

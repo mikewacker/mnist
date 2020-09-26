@@ -1,4 +1,5 @@
 import unittest
+import numpy.testing as npt
 import nn_optimizers
 
 import numpy as np
@@ -15,7 +16,7 @@ class NNOptimizersTestCase(unittest.TestCase):
         optimizer.update_weights(0, layer, (dW,), 0.01)
 
         expected_W = W_prev - 0.01 * dW
-        self.assertArraysEqual(layer.weights[0], expected_W)
+        npt.assert_almost_equal(layer.weights[0], expected_W)
 
     def testAdamOptimizer(self):
         optimizer = nn_optimizers.adam()
@@ -30,7 +31,7 @@ class NNOptimizersTestCase(unittest.TestCase):
 
         expected_step = self._getExpectedAdamStep(dW1, dW2, dW3)
         expected_W = W_prev - 0.01 * expected_step
-        self.assertArraysEqual(layer.weights[0], expected_W)
+        npt.assert_almost_equal(layer.weights[0], expected_W)
 
     def testOptimizerPersistence(self):
         optimizer1 = nn_optimizers.adam()
@@ -50,7 +51,7 @@ class NNOptimizersTestCase(unittest.TestCase):
 
         expected_step = self._getExpectedAdamStep(dW1, dW2, dW3)
         expected_W = W_prev - 0.01 * expected_step
-        self.assertArraysEqual(layer.weights[0], expected_W)
+        npt.assert_almost_equal(layer.weights[0], expected_W)
         expected_keys = [
             "layer 1: optimizer-adam[0][0]",
             "layer 1: optimizer-adam[0][1]",
@@ -77,7 +78,7 @@ class NNOptimizersTestCase(unittest.TestCase):
         dW, _, _ = self._createGradients()
         step = stepper.step(dW)
 
-        self.assertArraysEqual(step, dW)
+        npt.assert_almost_equal(step, dW)
 
     def testGradientDescentEmptyState(self):
         stepper = nn_optimizers._GradientDescent((2, 2))
@@ -93,7 +94,7 @@ class NNOptimizersTestCase(unittest.TestCase):
         step = stepper.step(dW3)
 
         expected_step = self._getExpectedAdamStep(dW1, dW2, dW3)
-        self.assertArraysEqual(step, expected_step)
+        npt.assert_almost_equal(step, expected_step)
 
     def testAdamStep_Persistence(self):
         stepper1 = nn_optimizers._Adam((2, 2), 0.9, 0.999, 1e-8)
@@ -107,12 +108,12 @@ class NNOptimizersTestCase(unittest.TestCase):
         step = stepper2.step(dW3)
 
         expected_step = self._getExpectedAdamStep(dW1, dW2, dW3)
-        self.assertArraysEqual(step, expected_step)
+        npt.assert_almost_equal(step, expected_step)
 
     def _createGradients(self):
-        dW1 = np.array([[1.0, 2.0], [3.0, 4.0]])
-        dW2 = np.array([[4.0, 1.0], [2.0, 3.0]])
-        dW3 = np.array([[3.0, 4.0], [1.0, 2.0]])
+        dW1 = np.array([[1., 2.], [3., 4.]])
+        dW2 = np.array([[4., 1.], [2., 3.]])
+        dW3 = np.array([[3., 4.], [1., 2.]])
         return dW1, dW2, dW3
 
     def _getExpectedAdamStep(self, dW1, dW2, dW3):
@@ -129,12 +130,8 @@ class NNOptimizersTestCase(unittest.TestCase):
         step = vdW_bc / (np.sqrt(sdW_bc) + 1e-8)
         return step
 
-    def assertArraysEqual(self, A, expected_A):
-        A_diff = np.abs(A - expected_A)
-        self.assertLess(np.max(A_diff), 1e-8)
-
 class MockLayer(object):
 
     def __init__(self):
-        W = np.array([[2.0, 3.0], [4.0, 1.0]])
+        W = np.array([[2., 3.], [4., 1.]])
         self.weights = (W,)
