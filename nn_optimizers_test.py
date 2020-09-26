@@ -6,6 +6,10 @@ import numpy as np
 
 class NNOptimizersTestCase(unittest.TestCase):
 
+    ####
+    # Optimizers
+    ####
+
     def testGradientDescentOptimizer(self):
         optimizer = nn_optimizers.gradient_descent()
         layer = MockLayer()
@@ -71,6 +75,10 @@ class NNOptimizersTestCase(unittest.TestCase):
         optimizer2.load_state(nn_dict)
 
         self.assertFalse(nn_dict)
+
+    ####
+    # Steppers
+    ####
 
     def testGradientDescentStep(self):
         stepper = nn_optimizers._GradientDescent((2, 2))

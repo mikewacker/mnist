@@ -11,6 +11,10 @@ class NNUnitsTestCase(unittest.TestCase):
     def setUp(self):
         np.random.seed(460072)
 
+    ####
+    # Base unit
+    ####
+
     def testBaseUnit_Properties(self):
         W = np.zeros((3, 3, 3, 6))
         b = np.zeros((1, 1, 1, 6))
@@ -93,6 +97,10 @@ class NNUnitsTestCase(unittest.TestCase):
             unit.load_weights({}, 0)
         with self.assertRaises(ValueError):
             unit.load_weights({"layer 1: weights[0]": W2}, 0)
+
+    ####
+    # Units
+    ####
 
     def testDenseUnit_Shape(self):
         unit = nn_units.dense(4, 3)
@@ -245,6 +253,10 @@ class NNUnitsTestCase(unittest.TestCase):
         dZ = np.ones(Z.shape)
         dA_prev, grads = self._unit.backward(dZ, True)
         return (dA_prev, *grads)
+
+    ####
+    # Weight initialization
+    ####
 
     def testGlorotNormalInitialization(self):
         W = nn_units._glorot_normal_initialization((500, 300), 500, 300)

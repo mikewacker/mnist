@@ -8,6 +8,10 @@ import gradient_checking
 
 class NNActivationsTestCase(unittest.TestCase):
 
+    ####
+    # Activations
+    ####
+
     def testReluActivation_Forward(self):
         activation = nn_activations.activation("relu")
         Z = np.array([[1., -2.], [0., 0.25]])
@@ -51,6 +55,10 @@ class NNActivationsTestCase(unittest.TestCase):
         dA = np.ones(A.shape)
         dZ = self._activation.backward(dA)
         return (dZ,)
+
+    ####
+    # Outputs
+    ####
 
     def testBinaryOutput_Properties(self):
         output = nn_activations.binary_output()
@@ -128,6 +136,10 @@ class NNActivationsTestCase(unittest.TestCase):
         self._output.forward(Z)
         dZ = self._output.backward(None)
         return (dZ,)
+
+    ####
+    # Activation functions
+    ####
 
     def testSigmoid(self):
         log_odds = np.log(np.array([[3., 4.], [1., 0.25]]))
