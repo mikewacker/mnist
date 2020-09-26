@@ -97,10 +97,10 @@ class NNUnitsTestCase(unittest.TestCase):
         self.assertEqual(unit.shape_out, (3,))
 
     def testDenseUnit_Forward(self):
+        unit = nn_units.dense(3, 2)
         A_prev = np.array([[1., 2., 3.], [3., 2., 1.]])
         W = np.array([[1., 3.], [2., 2.], [3., 1.]])
         b = np.array([[1., 2.]])
-        unit = nn_units.dense(3, 2)
         unit.weights = (W, b)
         Z = unit.forward(A_prev)
         expected_Z = np.array([[15., 12.], [11., 16.]])
@@ -112,6 +112,25 @@ class NNUnitsTestCase(unittest.TestCase):
 
     def testDenseUnit_GradientCheck(self):
         unit = nn_units.dense(4, 2)
+        self._testUnit_GradientCheck(unit)
+
+    def testFlattenUnit_Shape(self):
+        unit = nn_units.flatten((4, 4, 2))
+        self.assertEqual(unit.shape_in, (4, 4, 2))
+        self.assertEqual(unit.shape_out, (32,))
+
+    def testFlattenUnit_Forward(self):
+        unit = nn_units.flatten((4, 4, 2))
+        A_prev = np.zeros((3, 4, 4, 2))
+        Z = unit.forward(A_prev)
+        self.assertEqual(Z.shape, (3, 32))
+
+    def testFlattenUnit_UnchainedBackward(self):
+        unit = nn_units.flatten((4, 4, 2))
+        self._testUnit_UnchainedBackward(unit)
+
+    def testFlattenUnit_GradientCheck(self):
+        unit = nn_units.flatten((4, 4, 2))
         self._testUnit_GradientCheck(unit)
 
     def _testUnit_UnchainedBackward(self, unit):

@@ -4,6 +4,10 @@ def dense(n_prev, n):
     """Creates a dense, fully-connected unit."""
     return _DenseUnit(n_prev, n)
 
+def flatten(shape_in):
+    """Creates a unit to flatten the inputs for each sample."""
+    return _FlattenUnit(shape_in)
+
 ####
 # Base unit
 ####
@@ -139,6 +143,28 @@ class _DenseUnit(_BaseUnit):
         W = _glorot_normal_initialization(W_shape, n_prev, n)
         b = np.zeros((1, n))
         return W, b
+
+class _FlattenUnit(_BaseUnit):
+    """Flattens the inputs."""
+
+    def __init__(self, shape_in):
+        """Initializes the unit."""
+        n = np.prod(np.array(shape_in))
+        shape_out = (n,)
+        super().__init__(shape_in, shape_out)
+
+    def forward(self, A_prev):
+        """Feeds the inputs forward."""
+        Z = A_prev.reshape((-1, *self.shape_out))
+        return Z
+
+    def backward(self, dZ, chained):
+        """Back-propagates the output gradients."""
+        if not chained:
+            return None, ()
+
+        dA_prev = dZ.reshape((-1, *self.shape_in))
+        return dA_prev, ()
 
 ####
 # Weight initialization
