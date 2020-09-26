@@ -20,8 +20,8 @@ def convolution_2d(
     """Creates a 2D convulational layer.
 
     Args:
-        n_H_prev: height of input
-        n_W_prev: width of input
+        n_H_prev: height of inputs
+        n_W_prev: width of inputs
         n_C_prev: number of input channels
         n_C: number of output channels
         kernel_size: size of the kernel
@@ -41,8 +41,8 @@ def max_pool_2d(
     """Creats a 2D max-pooling layer.
 
     Args:
-        n_H_prev: height of input
-        n_W_prev: width of input
+        n_H_prev: height of inputs
+        n_W_prev: width of inputs
         n_C_prev: number of input channels
         pool_size: size of the pool
         stride: stride length for the pool, or 0 to match the pool size
