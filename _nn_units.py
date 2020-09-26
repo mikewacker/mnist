@@ -26,6 +26,7 @@ A unit extends _BaseUnit. It must invoke the following super-constructor:
 
 Notes:
 
+*   Corresponding properties exist that can be used in your implementation.
 *   shape_in, shape_out exclude the first dimension for the number of samples.
 *   weights is a tuple of numpy arrays.
 
