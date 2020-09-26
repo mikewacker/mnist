@@ -1,3 +1,5 @@
+import numpy as np
+
 import _nn_units
 import _nn_activations
 
@@ -89,6 +91,19 @@ An output layer can be created in one way:
 
 *   composing a unit and an output via _OutputLayer
 """
+
+####
+# Layer shapes
+####
+
+def onehot_output(y, output):
+    """One-hot encodes the output labels."""
+    if not output.is_multiclass:
+        return y.reshape((-1, 1))
+    m = y.shape[0]
+    Y = np.zeros((m, output.C))
+    Y[np.arange(m), y] = 1
+    return Y
 
 ####
 # Layer composition

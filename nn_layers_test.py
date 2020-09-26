@@ -1,4 +1,5 @@
 import unittest
+import numpy.testing as npt
 import nn_layers
 
 import numpy as np
@@ -107,6 +108,24 @@ class NNLayersTestCase(unittest.TestCase):
         layer.forward(A_prev)
         dA_prev, grads = layer.backward(None, True)
         return (dA_prev, *grads)
+
+    ####
+    # Layer shapes
+    ####
+
+    def testOnehotOutput_Binary(self):
+        output = nn_layers.binary_output(10)
+        y = np.array([0, 1, 0])
+        Y = nn_layers.onehot_output(y, output)
+        expected_Y = np.array([[0], [1], [0]])
+        npt.assert_equal(Y, expected_Y)
+
+    def testOnehotOutput_Multiclass(self):
+        output = nn_layers.multiclass_output(10, 3)
+        y = np.array([1, 0, 2])
+        Y = nn_layers.onehot_output(y, output)
+        expected_Y = np.array([[0., 1., 0.], [1., 0., 0.], [0., 0., 1.]])
+        npt.assert_equal(Y, expected_Y)
 
     ####
     # Layer composition
