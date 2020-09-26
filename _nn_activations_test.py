@@ -1,6 +1,6 @@
 import unittest
 import numpy.testing as npt
-import nn_activations
+import _nn_activations
 
 import numpy as np
 
@@ -13,7 +13,7 @@ class NNActivationsTestCase(unittest.TestCase):
     ####
 
     def testReluActivation_Forward(self):
-        activation = nn_activations.activation("relu")
+        activation = _nn_activations.activation("relu")
         Z = np.array([[1., -2.], [0., 0.25]])
         A = activation.forward(Z)
         expected_A = np.array([[1., 0.], [0., 0.25]])
@@ -30,10 +30,10 @@ class NNActivationsTestCase(unittest.TestCase):
 
     def testActivationError_UnknownFunction(self):
         with self.assertRaises(ValueError):
-            nn_activations.activation("dne")
+            _nn_activations.activation("dne")
 
     def _testActivation_GradientCheck(self, fn):
-        self._activation = nn_activations.activation(fn)
+        self._activation = _nn_activations.activation(fn)
         Z = self._createZ(3)
         diff, _, _ = gradient_checking.check(
             self._activationCost, self._activationGradients, Z)
@@ -61,29 +61,29 @@ class NNActivationsTestCase(unittest.TestCase):
     ####
 
     def testBinaryOutput_Properties(self):
-        output = nn_activations.binary_output()
+        output = _nn_activations.binary_output()
         self.assertFalse(output.is_multiclass)
         self.assertEqual(output.C, 2)
 
     def testBinaryOutput_Predict(self):
-        output = nn_activations.binary_output()
+        output = _nn_activations.binary_output()
         Z = np.log(np.array([[3.], [1.], [0.25]]))
         expected_pred = np.array([1, 0, 0])
         expected_prob = np.array([0.75, 0.5, 0.2])
         self._testOutput_Predict(output, Z, expected_pred, expected_prob)
 
     def testBinaryOutput_GradientCheck(self):
-        output = nn_activations.binary_output()
+        output = _nn_activations.binary_output()
         output.Y = np.array([[0.], [1.], [0.]])
         self._testOutput_GradientCheck(output)
 
     def testMulticlassOutput_Properties(self):
-        output = nn_activations.multiclass_output(3)
+        output = _nn_activations.multiclass_output(3)
         self.assertTrue(output.is_multiclass)
         self.assertEqual(output.C, 3)
 
     def testMulticlassOutput_Predict(self):
-        output = nn_activations.multiclass_output(3)
+        output = _nn_activations.multiclass_output(3)
         Z = np.log(np.array([[1., 2., 1.], [5., 3., 2.], [1., 1., 3.]]))
         expected_pred = np.array([1, 0, 2])
         expected_prob = np.array(
@@ -91,16 +91,16 @@ class NNActivationsTestCase(unittest.TestCase):
         self._testOutput_Predict(output, Z, expected_pred, expected_prob)
 
     def testMulticlassOutput_GradientCheck(self):
-        output = nn_activations.multiclass_output(3)
+        output = _nn_activations.multiclass_output(3)
         output.Y = np.array([[0., 1., 0.], [1., 0., 0.], [0., 0., 1.]])
         self._testOutput_GradientCheck(output)
 
     def testMulticlasOutputError_IllegalC(self):
         with self.assertRaises(ValueError):
-            nn_activations.multiclass_output(2)
+            _nn_activations.multiclass_output(2)
 
     def testOutputError_YNotSet(self):
-        output = nn_activations.binary_output()
+        output = _nn_activations.binary_output()
         with self.assertRaises(RuntimeError):
             output.Y
         Z = np.zeros((3, 1))
@@ -143,12 +143,12 @@ class NNActivationsTestCase(unittest.TestCase):
 
     def testSigmoid(self):
         log_odds = np.log(np.array([[3., 4.], [1., 0.25]]))
-        A = nn_activations._sigmoid(log_odds)
+        A = _nn_activations._sigmoid(log_odds)
         expected_prob = np.array([[0.75, 0.80], [0.50, 0.20]])
         npt.assert_almost_equal(A, expected_prob)
 
     def testSoftmax(self):
         log_odds = np.log(np.array([[1., 3., 1.], [2., 5., 3.]]))
-        A = nn_activations._softmax(log_odds)
+        A = _nn_activations._softmax(log_odds)
         expected_prob = np.array([[0.2, 0.6, 0.2], [0.2, 0.5, 0.3]])
         npt.assert_almost_equal(A, expected_prob)

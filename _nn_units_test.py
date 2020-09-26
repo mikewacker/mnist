@@ -1,6 +1,6 @@
 import unittest
 import numpy.testing as npt
-import nn_units
+import _nn_units
 
 import numpy as np
 
@@ -18,7 +18,7 @@ class NNUnitsTestCase(unittest.TestCase):
     def testBaseUnit_Properties(self):
         W = np.zeros((3, 3, 3, 6))
         b = np.zeros((1, 1, 1, 6))
-        unit = nn_units._BaseUnit((5, 5, 3), (3, 3, 6), (W, b))
+        unit = _nn_units._BaseUnit((5, 5, 3), (3, 3, 6), (W, b))
 
         self.assertEqual(unit.shape_in, (5, 5, 3))
         self.assertEqual(unit.shape_out, (3, 3, 6))
@@ -28,7 +28,7 @@ class NNUnitsTestCase(unittest.TestCase):
         self.assertEqual(unit.weights[1].shape, (1, 1, 1, 6))
 
     def testBaseUnit_Properties_NoWeights(self):
-        unit = nn_units._BaseUnit((3, 3, 6), 54)
+        unit = _nn_units._BaseUnit((3, 3, 6), 54)
 
         self.assertEqual(unit.shape_in, (3, 3, 6))
         self.assertEqual(unit.shape_out, (54,))
@@ -40,13 +40,13 @@ class NNUnitsTestCase(unittest.TestCase):
         b_0 = np.zeros((1, 2))
         W = np.ones((4, 2))
         b = np.ones((1, 2))
-        unit = nn_units._BaseUnit(4, 2, (W_0, b_0))
+        unit = _nn_units._BaseUnit(4, 2, (W_0, b_0))
         unit.weights = (W, b)
 
         self.assertEqual(unit.weights[0][0, 0], 1.)
 
     def testBaseUnit_SetWeights_NoWeights(self):
-        unit = nn_units._BaseUnit(4, 2)
+        unit = _nn_units._BaseUnit(4, 2)
         unit.weights = ()
 
     def testBaseUnit_Persistence(self):
@@ -55,8 +55,8 @@ class NNUnitsTestCase(unittest.TestCase):
         W = np.ones((4, 2))
         b = np.ones((1, 2))
         nn_dict = {}
-        unit1 = nn_units._BaseUnit(4, 2, (W, b))
-        unit2 = nn_units._BaseUnit(4, 2, (W_0, b_0))
+        unit1 = _nn_units._BaseUnit(4, 2, (W, b))
+        unit2 = _nn_units._BaseUnit(4, 2, (W_0, b_0))
         unit1.save_weights(nn_dict, 0)
         unit2.load_weights(nn_dict, 0)
 
@@ -66,8 +66,8 @@ class NNUnitsTestCase(unittest.TestCase):
 
     def testBaseUnit_Persistence_NoWeights(self):
         nn_dict = {}
-        unit1 = nn_units._BaseUnit(4, 2)
-        unit2 = nn_units._BaseUnit(4, 2)
+        unit1 = _nn_units._BaseUnit(4, 2)
+        unit2 = _nn_units._BaseUnit(4, 2)
         unit1.save_weights(nn_dict, 0)
         unit2.load_weights(nn_dict, 0)
 
@@ -76,12 +76,12 @@ class NNUnitsTestCase(unittest.TestCase):
     def testBaseUnitError_InvalidWeights_Create(self):
         W = np.zeros((2, 2))
         with self.assertRaises(ValueError):
-            nn_units._BaseUnit(4, 2, W)
+            _nn_units._BaseUnit(4, 2, W)
 
     def testBaseUnitError_InvalidWeights_SetWeights(self):
         W1 = np.zeros((2, 2))
         W2 = np.zeros((1, 2))
-        unit = nn_units._BaseUnit(4, 2, (W1,))
+        unit = _nn_units._BaseUnit(4, 2, (W1,))
         with self.assertRaises(ValueError):
             unit.weights = W1
         with self.assertRaises(ValueError):
@@ -92,7 +92,7 @@ class NNUnitsTestCase(unittest.TestCase):
     def testBaseUnitError_InvalidWeights_LoadWeights(self):
         W1 = np.zeros((2, 2))
         W2 = np.zeros((1, 2))
-        unit = nn_units._BaseUnit(4, 2, (W1,))
+        unit = _nn_units._BaseUnit(4, 2, (W1,))
         with self.assertRaises(ValueError):
             unit.load_weights({}, 0)
         with self.assertRaises(ValueError):
@@ -103,12 +103,12 @@ class NNUnitsTestCase(unittest.TestCase):
     ####
 
     def testDenseUnit_Shape(self):
-        unit = nn_units.dense(4, 3)
+        unit = _nn_units.dense(4, 3)
         self.assertEqual(unit.shape_in, (4,))
         self.assertEqual(unit.shape_out, (3,))
 
     def testDenseUnit_Forward(self):
-        unit = nn_units.dense(3, 2)
+        unit = _nn_units.dense(3, 2)
         A_prev = np.array([[1., 2., 3.], [3., 2., 1.]])
         W = np.array([[1., 3.], [2., 2.], [3., 1.]])
         b = np.array([[1., 2.]])
@@ -118,21 +118,21 @@ class NNUnitsTestCase(unittest.TestCase):
         npt.assert_almost_equal(Z, expected_Z)
 
     def testDenseUnit_UnchainedBackward(self):
-        unit = nn_units.dense(4, 2)
+        unit = _nn_units.dense(4, 2)
         self._testUnit_UnchainedBackward(unit)
 
     def testDenseUnit_GradientCheck(self):
-        unit = nn_units.dense(4, 2)
+        unit = _nn_units.dense(4, 2)
         self._testUnit_GradientCheck(unit)
 
     def testConvolution2DUnit_Shape(self):
-        unit = nn_units.convolution_2d(
+        unit = _nn_units.convolution_2d(
             7, 7, 2, 5, kernel_size=3, stride=2, padding=1)
         self.assertEqual(unit.shape_in, (7, 7, 2))
         self.assertEqual(unit.shape_out, (4, 4, 5))
 
     def testConvolution2DUnit_Forward(self):
-        unit = nn_units.convolution_2d(3, 3, 2, 2, kernel_size=2)
+        unit = _nn_units.convolution_2d(3, 3, 2, 2, kernel_size=2)
         A_prev = np.random.normal(0, 1, (2, 3, 3, 2))
         W, b = unit.weights
         Z = unit.forward(A_prev)
@@ -157,27 +157,27 @@ class NNUnitsTestCase(unittest.TestCase):
         npt.assert_almost_equal(Z, expected_Z)
 
     def testConvolution2DUnit_UnchainedBackward(self):
-        unit = nn_units.convolution_2d(
+        unit = _nn_units.convolution_2d(
             7, 7, 2, 5, kernel_size=3, stride=2, padding=1)
         self._testUnit_UnchainedBackward(unit)
 
     def testConvolution2DUnit_GradientCheck(self):
-        unit = nn_units.convolution_2d(
+        unit = _nn_units.convolution_2d(
             7, 7, 2, 5, kernel_size=3, stride=2, padding=1)
         self._testUnit_GradientCheck(unit)
 
     def testMaxPool2DUnit_Shape(self):
-        unit = nn_units.max_pool_2d(28, 28, 6, pool_size=2)
+        unit = _nn_units.max_pool_2d(28, 28, 6, pool_size=2)
         self.assertEqual(unit.shape_in, (28, 28, 6))
         self.assertEqual(unit.shape_out, (14, 14, 6))
 
     def testMaxPool2DUnit_Shape_DifferentStride(self):
-        unit = nn_units.max_pool_2d(28, 28, 6, pool_size=5, stride=3)
+        unit = _nn_units.max_pool_2d(28, 28, 6, pool_size=5, stride=3)
         self.assertEqual(unit.shape_in, (28, 28, 6))
         self.assertEqual(unit.shape_out, (8, 8, 6))
 
     def testMaxPool2DUnit_Forward(self):
-        unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
+        unit = _nn_units.max_pool_2d(4, 4, 2, pool_size=2)
         A_prev = np.random.normal(0, 1, (2, 4, 4, 2))
         Z = unit.forward(A_prev)
         expected_Z = np.array([
@@ -193,30 +193,30 @@ class NNUnitsTestCase(unittest.TestCase):
         npt.assert_almost_equal(Z, expected_Z)
 
     def testMaxPool2DUnit_UnchainedBackward(self):
-        unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
+        unit = _nn_units.max_pool_2d(4, 4, 2, pool_size=2)
         self._testUnit_UnchainedBackward(unit)
 
     def testMaxPool2DUnit_GradientCheck(self):
-        unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
+        unit = _nn_units.max_pool_2d(4, 4, 2, pool_size=2)
         self._testUnit_GradientCheck(unit)
 
     def testFlattenUnit_Shape(self):
-        unit = nn_units.flatten((4, 4, 2))
+        unit = _nn_units.flatten((4, 4, 2))
         self.assertEqual(unit.shape_in, (4, 4, 2))
         self.assertEqual(unit.shape_out, (32,))
 
     def testFlattenUnit_Forward(self):
-        unit = nn_units.flatten((4, 4, 2))
+        unit = _nn_units.flatten((4, 4, 2))
         A_prev = np.zeros((3, 4, 4, 2))
         Z = unit.forward(A_prev)
         self.assertEqual(Z.shape, (3, 32))
 
     def testFlattenUnit_UnchainedBackward(self):
-        unit = nn_units.flatten((4, 4, 2))
+        unit = _nn_units.flatten((4, 4, 2))
         self._testUnit_UnchainedBackward(unit)
 
     def testFlattenUnit_GradientCheck(self):
-        unit = nn_units.flatten((4, 4, 2))
+        unit = _nn_units.flatten((4, 4, 2))
         self._testUnit_GradientCheck(unit)
 
     def _testUnit_UnchainedBackward(self, unit):
@@ -259,7 +259,7 @@ class NNUnitsTestCase(unittest.TestCase):
     ####
 
     def testGlorotNormalInitialization(self):
-        W = nn_units._glorot_normal_initialization((500, 300), 500, 300)
+        W = _nn_units._glorot_normal_initialization((500, 300), 500, 300)
         self.assertEqual(W.shape, (500, 300))
         self.assertAlmostEqual(np.mean(W), 0, places=3)
         self.assertAlmostEqual(np.std(W), 0.05, places=3)
