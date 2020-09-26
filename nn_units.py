@@ -149,28 +149,6 @@ class _DenseUnit(_BaseUnit):
         b = np.zeros((1, n))
         return W, b
 
-class _FlattenUnit(_BaseUnit):
-    """Flattens the inputs."""
-
-    def __init__(self, shape_in):
-        """Initializes the unit."""
-        n = np.prod(np.array(shape_in))
-        shape_out = (n,)
-        super().__init__(shape_in, shape_out)
-
-    def forward(self, A_prev):
-        """Feeds the inputs forward."""
-        Z = A_prev.reshape((-1, *self.shape_out))
-        return Z
-
-    def backward(self, dZ, chained):
-        """Back-propagates the output gradients."""
-        if not chained:
-            return None, ()
-
-        dA_prev = dZ.reshape((-1, *self.shape_in))
-        return dA_prev, ()
-
 class _MaxPool2DUnit(_BaseUnit):
     """2D max-pooling unit."""
 
@@ -217,12 +195,11 @@ class _MaxPool2DUnit(_BaseUnit):
             return None, ()
         f, s = self._f, self._s
 
-        # Initialize.
-        m = dZ.shape[0]
-        dA_prev = np.empty((m, *self.shape_in))
-
         # Retrieve from cache.
         mask = self._mask
+
+        # Initialize.
+        dA_prev = np.empty(mask.shape)
 
         # Grab slices of the output, mask, and input.
         for h, w, h1_prev, h2_prev, w1_prev, w2_prev in _positions_2d(dZ, f, s):
@@ -241,6 +218,28 @@ class _MaxPool2DUnit(_BaseUnit):
         n_H = _filter_size_out(n_H_prev, pool_size, stride, 0)
         n_W = _filter_size_out(n_W_prev, pool_size, stride, 0)
         return (n_H, n_W, n_C_prev)
+
+class _FlattenUnit(_BaseUnit):
+    """Flattens the inputs."""
+
+    def __init__(self, shape_in):
+        """Initializes the unit."""
+        n = np.prod(np.array(shape_in))
+        shape_out = (n,)
+        super().__init__(shape_in, shape_out)
+
+    def forward(self, A_prev):
+        """Feeds the inputs forward."""
+        Z = A_prev.reshape((-1, *self.shape_out))
+        return Z
+
+    def backward(self, dZ, chained):
+        """Back-propagates the output gradients."""
+        if not chained:
+            return None, ()
+
+        dA_prev = dZ.reshape((-1, *self.shape_in))
+        return dA_prev, ()
 
 def _filter_size_out(n_prev, filter_size, stride, padding):
     """Calculates the output size for a filter."""

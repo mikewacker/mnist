@@ -114,6 +114,41 @@ class NNUnitsTestCase(unittest.TestCase):
         unit = nn_units.dense(4, 2)
         self._testUnit_GradientCheck(unit)
 
+    def testMaxPool2DUnit_Shape(self):
+        unit = nn_units.max_pool_2d(28, 28, 6, pool_size=2)
+        self.assertEqual(unit.shape_in, (28, 28, 6))
+        self.assertEqual(unit.shape_out, (14, 14, 6))
+
+    def testMaxPool2DUnit_Shape_DifferentStride(self):
+        unit = nn_units.max_pool_2d(28, 28, 6, pool_size=5, stride=3)
+        self.assertEqual(unit.shape_in, (28, 28, 6))
+        self.assertEqual(unit.shape_out, (8, 8, 6))
+
+    def testMaxPool2DUnit_Forward(self):
+        unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
+        np.random.seed(261392)
+        A_prev = np.random.normal(0, 1, (2, 4, 4, 2))
+        Z = unit.forward(A_prev)
+        expected_Z = np.array([
+            np.max(A_prev[0, 0:2, 0:2, 0]), np.max(A_prev[0, 0:2, 0:2, 1]),
+            np.max(A_prev[0, 0:2, 2:4, 0]), np.max(A_prev[0, 0:2, 2:4, 1]),
+            np.max(A_prev[0, 2:4, 0:2, 0]), np.max(A_prev[0, 2:4, 0:2, 1]),
+            np.max(A_prev[0, 2:4, 2:4, 0]), np.max(A_prev[0, 2:4, 2:4, 1]),
+            np.max(A_prev[1, 0:2, 0:2, 0]), np.max(A_prev[1, 0:2, 0:2, 1]),
+            np.max(A_prev[1, 0:2, 2:4, 0]), np.max(A_prev[1, 0:2, 2:4, 1]),
+            np.max(A_prev[1, 2:4, 0:2, 0]), np.max(A_prev[1, 2:4, 0:2, 1]),
+            np.max(A_prev[1, 2:4, 2:4, 0]), np.max(A_prev[1, 2:4, 2:4, 1]),
+        ]).reshape((2, 2, 2, 2))
+        npt.assert_almost_equal(Z, expected_Z)
+
+    def testMaxPool2DUnit_UnchainedBackward(self):
+        unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
+        self._testUnit_UnchainedBackward(unit)
+
+    def testMaxPool2DUnit_GradientCheck(self):
+        unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
+        self._testUnit_GradientCheck(unit)
+
     def testFlattenUnit_Shape(self):
         unit = nn_units.flatten((4, 4, 2))
         self.assertEqual(unit.shape_in, (4, 4, 2))
@@ -131,53 +166,6 @@ class NNUnitsTestCase(unittest.TestCase):
 
     def testFlattenUnit_GradientCheck(self):
         unit = nn_units.flatten((4, 4, 2))
-        self._testUnit_GradientCheck(unit)
-
-    def testMaxPool2DUnit_Shape(self):
-        unit = nn_units.max_pool_2d(28, 28, 6, pool_size=2)
-        self.assertEqual(unit.shape_in, (28, 28, 6))
-        self.assertEqual(unit.shape_out, (14, 14, 6))
-
-    def testMaxPool2DUnit_Shape_DifferentStride(self):
-        unit = nn_units.max_pool_2d(28, 28, 6, pool_size=5, stride=3)
-        self.assertEqual(unit.shape_in, (28, 28, 6))
-        self.assertEqual(unit.shape_out, (8, 8, 6))
-
-    def testMaxPool2DUnit_Forward(self):
-        unit = nn_units.max_pool_2d(4, 4, 1, pool_size=2)
-        A_prev = np.array([
-            [
-                [[1.], [2.], [5.], [2.]],
-                [[3.], [4.], [3.], [4.]],
-                [[5.], [6.], [5.], [6.]],
-                [[3.], [4.], [7.], [4.]],
-            ],
-            [
-                [[5.], [6.], [5.], [6.]],
-                [[3.], [4.], [7.], [4.]],
-                [[1.], [2.], [5.], [2.]],
-                [[3.], [4.], [3.], [4.]],
-            ],
-        ])
-        Z = unit.forward(A_prev)
-        expected_Z = np.array([
-            [
-                [[4.], [5.]],
-                [[6.], [7.]],
-            ],
-            [
-                [[6.], [7.]],
-                [[4.], [5.]],
-            ],
-        ])
-        npt.assert_almost_equal(Z, expected_Z)
-
-    def testMaxPool2DUnit_UnchainedBackward(self):
-        unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
-        self._testUnit_UnchainedBackward(unit)
-
-    def testMaxPool2DUnit_GradientCheck(self):
-        unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
         self._testUnit_GradientCheck(unit)
 
     def _testUnit_UnchainedBackward(self, unit):
