@@ -4,6 +4,12 @@ def dense(n_prev, n):
     """Creates a dense, fully-connected unit."""
     return _DenseUnit(n_prev, n)
 
+def convolution_2d(
+    n_H_prev, n_W_prev, n_C_prev, n_C, *, kernel_size, stride=1, padding=0):
+    """Creates a 2D convulational unit."""
+    return _Convolution2DUnit(
+        n_H_prev, n_W_prev, n_C_prev, n_C, kernel_size, stride, padding)
+
 def max_pool_2d(n_H_prev, n_W_prev, n_C_prev, *, pool_size, stride=0):
     """Creates a 2D max-pooling unit."""
     stride = stride or pool_size
@@ -12,6 +18,27 @@ def max_pool_2d(n_H_prev, n_W_prev, n_C_prev, *, pool_size, stride=0):
 def flatten(shape_in):
     """Creates a unit to flatten the inputs."""
     return _FlattenUnit(shape_in)
+
+"""
+A unit extends _BaseUnit. It must invoke the following super-constructor:
+
+*   super().__init__(shape_in, shape_out, weights=())
+
+Notes:
+
+*   shape_in, shape_out exclude the first dimension for the number of samples.
+*   weights is a tuple of numpy arrays.
+
+A unit must also implement the following methods:
+
+*   forward(A_prev)
+*   backward(dZ, chained)
+
+Notes:
+
+*   backward() returns the input gradients and a tuple of weight gradients.
+*   backward() doesn't calculate the input gradients if chained is False.
+"""
 
 ####
 # Base unit
@@ -147,6 +174,103 @@ class _DenseUnit(_BaseUnit):
         W_shape = (n_prev, n)
         W = _glorot_normal_initialization(W_shape, n_prev, n)
         b = np.zeros((1, n))
+        return W, b
+
+class _Convolution2DUnit(_BaseUnit):
+    """2D convolutional unit."""
+
+    def __init__(
+        self, n_H_prev, n_W_prev, n_C_prev, n_C, kernel_size, stride, padding):
+        """Initializes the unit."""
+        shape_in = (n_H_prev, n_W_prev, n_C_prev)
+        shape_out = _Convolution2DUnit._get_shape_out(
+            n_H_prev, n_W_prev, n_C, kernel_size, stride, padding)
+        weights = _Convolution2DUnit._init_weights(n_C_prev, n_C, kernel_size)
+        super().__init__(shape_in, shape_out, weights)
+
+        self._f = kernel_size
+        self._s = stride
+        self._p = padding
+
+    def forward(self, A_prev):
+        """Feeds the inputs forward."""
+        f, s, p = self._f, self._s, self._p
+        W, b = self.weights
+
+        # Initialize.
+        m = A_prev.shape[0]
+        Z = np.empty((m, *self.shape_out))
+
+        # Pad the input.
+        if p > 0:
+            pad_width = ((0, 0), (p, p), (p, p), (0, 0))
+            A_prev = np.pad(A_prev, pad_width, "constant", constant_values=0)
+
+        # Grab slices of the input and output.
+        for h, w, h1_prev, h2_prev, w1_prev, w2_prev in _positions_2d(Z, f, s):
+            A_prev_slice = A_prev[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+            Z_slice = Z[:, h, w, :]
+
+            # Computer the convolution for the input slice.
+            A_prev_slice = A_prev_slice.reshape((*A_prev_slice.shape, 1))
+            Z_slice[:] = np.sum(W * A_prev_slice, axis=(1,2,3)) + b
+
+        # Cache and return.
+        self._A_prev = A_prev
+        return Z
+
+    def backward(self, dZ, chained):
+        """Back-propagates the output gradients."""
+        f, s, p = self._f, self._s, self._p
+        W, b = self.weights
+
+        # Retrieve from cache.
+        A_prev = self._A_prev
+
+        # Initialize.
+        m, _, _, n_C = dZ.shape
+        dW = np.zeros(W.shape)
+        db = np.zeros(b.shape)
+        dA_prev = np.zeros(A_prev.shape) if chained else None
+
+        # Grab slices of the output and input.
+        for h, w, h1_prev, h2_prev, w1_prev, w2_prev in _positions_2d(dZ, f, s):
+            dZ_slice = dZ[:, h, w, :]
+            A_prev_slice = A_prev[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+
+            # Back-propagate to the weights.
+            dZ_slice = dZ_slice.reshape(m, 1, 1, 1, n_C)
+            A_prev_slice = A_prev_slice.reshape((*A_prev_slice.shape, 1))
+            dW += np.sum(A_prev_slice * dZ_slice, axis=0)
+            db += np.sum(dZ_slice, axis=(0, 1, 2, 3))
+
+            # Back-propagate to the input slice.
+            if not chained:
+                continue
+            dA_prev_slice = dA_prev[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+            dA_prev_slice += np.sum(W * dZ_slice, axis=4)
+
+        # Remove padding from the input.
+        if chained and p > 0:
+            dA_prev = dA_prev[:, p:-p, p:-p, :]
+
+        return dA_prev, (dW, db)
+
+    @staticmethod
+    def _get_shape_out(n_H_prev, n_W_prev, n_C, kernel_size, stride, padding):
+        """Gets the shape of the output."""
+        n_H = _filter_size_out(n_H_prev, kernel_size, stride, padding)
+        n_W = _filter_size_out(n_W_prev, kernel_size, stride, padding)
+        return (n_H, n_W, n_C)
+
+    @staticmethod
+    def _init_weights(n_C_prev, n_C, kernel_size):
+        """Initializes the weights using Xavier initialization."""
+        W_shape = (kernel_size, kernel_size, n_C_prev, n_C)
+        fan_in = kernel_size * kernel_size * n_C_prev
+        fan_out = n_C
+        W = _glorot_normal_initialization(W_shape, fan_in, fan_out)
+        b = np.zeros(n_C)
         return W, b
 
 class _MaxPool2DUnit(_BaseUnit):

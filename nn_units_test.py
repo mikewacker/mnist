@@ -8,6 +8,9 @@ import gradient_checking
 
 class NNUnitsTestCase(unittest.TestCase):
 
+    def setUp(self):
+        np.random.seed(460072)
+
     def testBaseUnit_Properties(self):
         W = np.zeros((3, 3, 3, 6))
         b = np.zeros((1, 1, 1, 6))
@@ -114,6 +117,47 @@ class NNUnitsTestCase(unittest.TestCase):
         unit = nn_units.dense(4, 2)
         self._testUnit_GradientCheck(unit)
 
+    def testConvolution2DUnit_Shape(self):
+        unit = nn_units.convolution_2d(
+            7, 7, 2, 5, kernel_size=3, stride=2, padding=1)
+        self.assertEqual(unit.shape_in, (7, 7, 2))
+        self.assertEqual(unit.shape_out, (4, 4, 5))
+
+    def testConvolution2DUnit_Forward(self):
+        unit = nn_units.convolution_2d(3, 3, 2, 2, kernel_size=2)
+        A_prev = np.random.normal(0, 1, (2, 3, 3, 2))
+        W, b = unit.weights
+        Z = unit.forward(A_prev)
+        expected_Z = np.array([
+            np.sum(W[:, :, :, 0] * A_prev[0, 0:2, 0:2, :]) + b[0],
+            np.sum(W[:, :, :, 1] * A_prev[0, 0:2, 0:2, :]) + b[1],
+            np.sum(W[:, :, :, 0] * A_prev[0, 0:2, 1:3, :]) + b[0],
+            np.sum(W[:, :, :, 1] * A_prev[0, 0:2, 1:3, :]) + b[1],
+            np.sum(W[:, :, :, 0] * A_prev[0, 1:3, 0:2, :]) + b[0],
+            np.sum(W[:, :, :, 1] * A_prev[0, 1:3, 0:2, :]) + b[1],
+            np.sum(W[:, :, :, 0] * A_prev[0, 1:3, 1:3, :]) + b[0],
+            np.sum(W[:, :, :, 1] * A_prev[0, 1:3, 1:3, :]) + b[1],
+            np.sum(W[:, :, :, 0] * A_prev[1, 0:2, 0:2, :]) + b[0],
+            np.sum(W[:, :, :, 1] * A_prev[1, 0:2, 0:2, :]) + b[1],
+            np.sum(W[:, :, :, 0] * A_prev[1, 0:2, 1:3, :]) + b[0],
+            np.sum(W[:, :, :, 1] * A_prev[1, 0:2, 1:3, :]) + b[1],
+            np.sum(W[:, :, :, 0] * A_prev[1, 1:3, 0:2, :]) + b[0],
+            np.sum(W[:, :, :, 1] * A_prev[1, 1:3, 0:2, :]) + b[1],
+            np.sum(W[:, :, :, 0] * A_prev[1, 1:3, 1:3, :]) + b[0],
+            np.sum(W[:, :, :, 1] * A_prev[1, 1:3, 1:3, :]) + b[1],
+        ]).reshape((2, 2, 2, 2))
+        npt.assert_almost_equal(Z, expected_Z)
+
+    def testConvolution2DUnit_UnchainedBackward(self):
+        unit = nn_units.convolution_2d(
+            7, 7, 2, 5, kernel_size=3, stride=2, padding=1)
+        self._testUnit_UnchainedBackward(unit)
+
+    def testConvolution2DUnit_GradientCheck(self):
+        unit = nn_units.convolution_2d(
+            7, 7, 2, 5, kernel_size=3, stride=2, padding=1)
+        self._testUnit_GradientCheck(unit)
+
     def testMaxPool2DUnit_Shape(self):
         unit = nn_units.max_pool_2d(28, 28, 6, pool_size=2)
         self.assertEqual(unit.shape_in, (28, 28, 6))
@@ -126,7 +170,6 @@ class NNUnitsTestCase(unittest.TestCase):
 
     def testMaxPool2DUnit_Forward(self):
         unit = nn_units.max_pool_2d(4, 4, 2, pool_size=2)
-        np.random.seed(261392)
         A_prev = np.random.normal(0, 1, (2, 4, 4, 2))
         Z = unit.forward(A_prev)
         expected_Z = np.array([
@@ -186,7 +229,6 @@ class NNUnitsTestCase(unittest.TestCase):
         self.assertLess(diff, 1e-7)
 
     def _createAPrev(self, unit):
-        np.random.seed(460072)
         A_prev_shape = (3, *unit.shape_in)
         A_prev = np.random.normal(0, 1, A_prev_shape)
         return A_prev
@@ -205,7 +247,6 @@ class NNUnitsTestCase(unittest.TestCase):
         return (dA_prev, *grads)
 
     def testGlorotNormalInitialization(self):
-        np.random.seed(692616)
         W = nn_units._glorot_normal_initialization((500, 300), 500, 300)
         self.assertEqual(W.shape, (500, 300))
         self.assertAlmostEqual(np.mean(W), 0, places=3)
