@@ -4,8 +4,13 @@ def dense(n_prev, n):
     """Creates a dense, fully-connected unit."""
     return _DenseUnit(n_prev, n)
 
+def max_pool_2d(n_H_prev, n_W_prev, n_C_prev, *, pool_size, stride=0):
+    """Creates a 2D max-pooling unit."""
+    stride = stride or pool_size
+    return _MaxPool2DUnit(n_H_prev, n_W_prev, n_C_prev, pool_size, stride)
+
 def flatten(shape_in):
-    """Creates a unit to flatten the inputs for each sample."""
+    """Creates a unit to flatten the inputs."""
     return _FlattenUnit(shape_in)
 
 ####
@@ -165,6 +170,93 @@ class _FlattenUnit(_BaseUnit):
 
         dA_prev = dZ.reshape((-1, *self.shape_in))
         return dA_prev, ()
+
+class _MaxPool2DUnit(_BaseUnit):
+    """2D max-pooling unit."""
+
+    def __init__(self, n_H_prev, n_W_prev, n_C_prev, pool_size, stride):
+        """Initializes the unit."""
+        shape_in = (n_H_prev, n_W_prev, n_C_prev)
+        shape_out = _MaxPool2DUnit._get_shape_out(
+            n_H_prev, n_W_prev, n_C_prev, pool_size, stride)
+        super().__init__(shape_in, shape_out)
+
+        self._f = pool_size
+        self._s = stride
+
+    def forward(self, A_prev):
+        """Feeds the inputs forward."""
+        f, s = self._f, self._s
+
+        # Initialize.
+        m = A_prev.shape[0]
+        mask = np.empty(A_prev.shape, dtype=bool)
+        Z = np.empty((m, *self.shape_out))
+
+        # Iterate over each output position.
+        n_H, n_W, _ = self.shape_out
+        for h, w, h1_prev, h2_prev, w1_prev, w2_prev in _positions_2d(Z, f, s):
+
+            # Pool a slice of input to the current position.
+            A_prev_slice = A_prev[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+            A_prev_slice_max = np.max(A_prev_slice, axis=(1, 2), keepdims=True)
+            Z[:, h:h+1, w:w+1, :] = A_prev_slice_max
+
+            # Set a slice of the mask.
+            # Duplicate maxes are very unlikely and have minimal impact.
+            mask_slice = mask[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+            mask_slice[:] = (A_prev_slice - A_prev_slice_max) == 0.0
+
+        # Cache and return.
+        self._mask = mask
+        return Z
+
+    def backward(self, dZ, chained):
+        """Back-propagates the output gradients."""
+        if not chained:
+            return None, ()
+        f, s = self._f, self._s
+
+        # Initialize.
+        m = dZ.shape[0]
+        dA_prev = np.empty((m, *self.shape_in))
+
+        # Retrieve from cache.
+        mask = self._mask
+
+        # Iterate over each output position.
+        n_H, n_W, _ = self.shape_out
+        for h, w, h1_prev, h2_prev, w1_prev, w2_prev in _positions_2d(dZ, f, s):
+
+            # Back-propagate from the current position to an input slice.
+            dZ_slice = dZ[:, h:h+1, w:w+1, :]
+            mask_slice = mask[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+            dA_prev_slice = dA_prev[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
+            dA_prev_slice[:] = dZ_slice * mask_slice
+
+        return dA_prev, ()
+
+    @staticmethod
+    def _get_shape_out(n_H_prev, n_W_prev, n_C_prev, pool_size, stride):
+        """Gets the shape of the outputs."""
+        n_H = _filter_size_out(n_H_prev, pool_size, stride, 0)
+        n_W = _filter_size_out(n_W_prev, pool_size, stride, 0)
+        return (n_H, n_W, n_C_prev)
+
+def _filter_size_out(n_prev, filter_size, stride, padding):
+    """Calculates the output size for a filter."""
+    return ((n_prev + 2 * padding - filter_size) // stride) + 1
+
+def _positions_2d(Z, filter_size, stride):
+    """Generates each output position and the corresponding input slice."""
+    _, n_H, n_W, _ = Z.shape
+    for h in range(n_H):
+        h1_prev = h * stride
+        h2_prev = h1_prev + filter_size
+        for w in range(n_W):
+            w1_prev = w * stride
+            w2_prev = w1_prev + filter_size
+            yield h, w, h1_prev, h2_prev, w1_prev, w2_prev
 
 ####
 # Weight initialization
