@@ -2,22 +2,22 @@ import numpy as np
 
 def dense(n_prev, n):
     """Creates a dense, fully-connected unit."""
-    return _DenseUnit(n_prev, n)
+    return _Dense(n_prev, n)
 
 def convolution_2d(
     n_H_prev, n_W_prev, n_C_prev, n_C, *, kernel_size, stride=1, padding=0):
     """Creates a 2D convulational unit."""
-    return _Convolution2DUnit(
+    return _Convolution2D(
         n_H_prev, n_W_prev, n_C_prev, n_C, kernel_size, stride, padding)
 
 def max_pool_2d(n_H_prev, n_W_prev, n_C_prev, *, pool_size, stride=0):
     """Creates a 2D max-pooling unit."""
     stride = stride or pool_size
-    return _MaxPool2DUnit(n_H_prev, n_W_prev, n_C_prev, pool_size, stride)
+    return _MaxPool2D(n_H_prev, n_W_prev, n_C_prev, pool_size, stride)
 
 def flatten(shape_in):
     """Creates a unit to flatten the inputs."""
-    return _FlattenUnit(shape_in)
+    return _Flatten(shape_in)
 
 """
 A unit extends _BaseUnit. It must invoke the following super-constructor:
@@ -131,14 +131,14 @@ class _BaseUnit(object):
 # Units
 ####
 
-class _DenseUnit(_BaseUnit):
+class _Dense(_BaseUnit):
     """Dense, fully-connected unit."""
 
     def __init__(self, n_prev, n):
         """Initializes the unit."""
         shape_in = (n_prev,)
         shape_out = (n,)
-        weights = _DenseUnit._init_weights(n_prev, n)
+        weights = _Dense._init_weights(n_prev, n)
         super().__init__(shape_in, shape_out, weights)
 
     def forward(self, A_prev):
@@ -176,16 +176,16 @@ class _DenseUnit(_BaseUnit):
         b = np.zeros((1, n))
         return W, b
 
-class _Convolution2DUnit(_BaseUnit):
+class _Convolution2D(_BaseUnit):
     """2D convolutional unit."""
 
     def __init__(
         self, n_H_prev, n_W_prev, n_C_prev, n_C, kernel_size, stride, padding):
         """Initializes the unit."""
         shape_in = (n_H_prev, n_W_prev, n_C_prev)
-        shape_out = _Convolution2DUnit._get_shape_out(
+        shape_out = _Convolution2D._get_shape_out(
             n_H_prev, n_W_prev, n_C, kernel_size, stride, padding)
-        weights = _Convolution2DUnit._init_weights(n_C_prev, n_C, kernel_size)
+        weights = _Convolution2D._init_weights(n_C_prev, n_C, kernel_size)
         super().__init__(shape_in, shape_out, weights)
 
         self._f = kernel_size
@@ -273,13 +273,13 @@ class _Convolution2DUnit(_BaseUnit):
         b = np.zeros(n_C)
         return W, b
 
-class _MaxPool2DUnit(_BaseUnit):
+class _MaxPool2D(_BaseUnit):
     """2D max-pooling unit."""
 
     def __init__(self, n_H_prev, n_W_prev, n_C_prev, pool_size, stride):
         """Initializes the unit."""
         shape_in = (n_H_prev, n_W_prev, n_C_prev)
-        shape_out = _MaxPool2DUnit._get_shape_out(
+        shape_out = _MaxPool2D._get_shape_out(
             n_H_prev, n_W_prev, n_C_prev, pool_size, stride)
         super().__init__(shape_in, shape_out)
 
@@ -343,7 +343,7 @@ class _MaxPool2DUnit(_BaseUnit):
         n_W = _filter_size_out(n_W_prev, pool_size, stride, 0)
         return (n_H, n_W, n_C_prev)
 
-class _FlattenUnit(_BaseUnit):
+class _Flatten(_BaseUnit):
     """Flattens the inputs."""
 
     def __init__(self, shape_in):
