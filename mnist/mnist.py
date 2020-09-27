@@ -1,12 +1,13 @@
 import functools
 import gzip
 import math
+import os
 
 import numpy as np
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
-import idx
+from . import idx
 
 _DIGITS = np.arange(10)
 
@@ -188,7 +189,9 @@ _Y_TEST_PATH = "data/t10k-labels-idx1-ubyte.gz"
 
 def _load_idx(path):
     """Loads a single IDX file."""
-    with gzip.open(path, "rb") as f:
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, path)
+    with gzip.open(filename, "rb") as f:
         return idx.read_array(f)
 
 ####

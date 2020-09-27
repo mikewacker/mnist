@@ -1,5 +1,5 @@
 import unittest
-import idx
+from . import idx
 
 import gzip
 import struct
