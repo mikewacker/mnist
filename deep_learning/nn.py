@@ -7,7 +7,7 @@ class NeuralNetwork(object):
     """Neural network for classification."""
 
     def __init__(
-        self, hidden_layers, output_layer, optimizer, preprocess_fn=None):
+        self, *, hidden_layers, output_layer, optimizer, preprocess_fn=None):
         """Initalizes the neural network.
 
         Args:
@@ -49,8 +49,8 @@ class NeuralNetwork(object):
         np.savez_compressed(file, **nn_dict)
 
     def train(
-        self, X, y, num_epochs, learning_rate,
-        minibatch_size=0, progress_fn=None):
+        self, X, y, *,
+        num_epochs, learning_rate, minibatch_size=0, progress_fn=None):
         """Trains the network.
 
         Args:
@@ -63,8 +63,9 @@ class NeuralNetwork(object):
         """
         X = self._preprocess_input(X)
         Y = nn_layers.onehot_output(y, self._output)
-        for X_mb, Y_mb in _nn_minibatch.minibatches(X, Y, minibatch_size):
-            self._train_minibatch(X_mb, Y_mb, learning_rate, progress_fn)
+        for _ in range(num_epochs):
+            for X_mb, Y_mb in _nn_minibatch.minibatches(X, Y, minibatch_size):
+                self._train_minibatch(X_mb, Y_mb, learning_rate, progress_fn)
 
     def predict(self, X):
         """Predicts the output labels.
