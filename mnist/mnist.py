@@ -33,7 +33,7 @@ def preprocess_flat(X):
         X: images as a (m, 28, 28) numpy array
 
     Returns:
-        X: scaled images as a (m, 784) numpy array
+        scaled images as a (m, 784) numpy array
     """
     X = X.reshape((-1, 784))
     return X / 255
@@ -45,7 +45,7 @@ def preprocess_channel(X):
         X: images as a (m, 28, 28) numpy array
 
     Returns:
-        X: scaled images as a (m, 28, 28, 1) numpy array
+        scaled images as a (m, 28, 28, 1) numpy array
     """
     X = X.reshape((-1, 28, 28, 1))
     return X / 255
@@ -93,7 +93,7 @@ def to_onehot_prob(y_pred):
     """
     m = y_pred.shape[0]
     Y_prob = np.zeros((m, 10))
-    Y_prob[np.arange(m), y_pred] = 1.0
+    Y_prob[np.arange(m), y_pred] = 1.
     return Y_prob
 
 def show_images(X, y, *, digits=None, size=64):
