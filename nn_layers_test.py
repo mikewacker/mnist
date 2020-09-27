@@ -113,6 +113,36 @@ class NNLayersTestCase(unittest.TestCase):
     # Layer shapes
     ####
 
+    def testCheckLayerShapes_OK(self):
+        layers = [
+            nn_layers.convolution_2d(10, 10, 3, 6, kernel_size=3, padding=1),
+            nn_layers.max_pool_2d(10, 10, 6, pool_size=2),
+            nn_layers.flatten((5, 5, 6)),
+            nn_layers.dense(150, 50),
+            nn_layers.binary_output(50),
+        ]
+        nn_layers.check_layer_shapes(layers)
+
+    def testCheckLayerShapes_Misaligned(self):
+        layers = [
+            nn_layers.convolution_2d(10, 10, 3, 6, kernel_size=3, padding=1),
+            nn_layers.max_pool_2d(10, 10, 6, pool_size=2),
+            nn_layers.dense(150, 50),
+        ]
+        with self.assertRaises(ValueError):
+            nn_layers.check_layer_shapes(layers)
+
+    def testCheckInputShape_OK(self):
+        layer = nn_layers.dense(10, 5)
+        X = np.zeros((3, 10))
+        nn_layers.check_input_shape(X, layer)
+
+    def testCheckInputShape_Misaligned(self):
+        layer = nn_layers.dense(10, 5)
+        X = np.zeros((3, 9))
+        with self.assertRaises(ValueError):
+            nn_layers.check_input_shape(X, layer)
+
     def testOnehotOutput_Binary(self):
         output = nn_layers.binary_output(10)
         y = np.array([0, 1, 0])

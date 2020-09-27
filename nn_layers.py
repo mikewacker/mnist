@@ -96,6 +96,27 @@ An output layer can be created in one way:
 # Layer shapes
 ####
 
+def check_layer_shapes(layers):
+    """Checks the shapes of the layers."""
+    prev_layer = layers[0]
+    for index, layer in enumerate(layers[1:], 1):
+        if prev_layer.shape_out == layer.shape_in:
+            prev_layer = layer
+            continue
+        msg = "layer {:d} expects shape {:s}, got {:s} from layer {:d}".format(
+            index + 1, _shape_text(layer.shape_in),
+            _shape_text(prev_layer.shape_out), index)
+        raise ValueError(msg)
+
+def check_input_shape(X, layer):
+    """Checks the shape of the inputs."""
+    shape_in = X.shape[1:]
+    if shape_in == layer.shape_in:
+        return
+    msg = "layer 1 expects shape {:s}, got {:s} from input".format(
+        _shape_text(layer.shape_in), _shape_text(shape_in))
+    raise ValueError(msg)
+
 def onehot_output(y, output):
     """One-hot encodes the output labels."""
     if not output.is_multiclass:
@@ -104,6 +125,11 @@ def onehot_output(y, output):
     Y = np.zeros((m, output.C))
     Y[np.arange(m), y] = 1
     return Y
+
+def _shape_text(shape):
+  """Represents the shape as text."""
+  sizes = ["m"] + [format(n, "d") for n in shape]
+  return "({:s})".format(", ".join(sizes))
 
 ####
 # Layer composition
