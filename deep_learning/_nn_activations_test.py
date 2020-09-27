@@ -1,10 +1,10 @@
 import unittest
 import numpy.testing as npt
-import _nn_activations
+from . import _nn_activations
 
 import numpy as np
 
-import gradient_checking
+from . import gradient_checking
 
 class NNActivationsTestCase(unittest.TestCase):
 

@@ -1,7 +1,7 @@
 import numpy as np
 
-import _nn_minibatch
-import nn_layers
+from . import _nn_minibatch
+from . import nn_layers
 
 class NeuralNetwork(object):
     """Neural network for classification."""

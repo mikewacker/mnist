@@ -1,10 +1,10 @@
 import unittest
 import numpy.testing as npt
-import _nn_units
+from . import _nn_units
 
 import numpy as np
 
-import gradient_checking
+from . import gradient_checking
 
 class NNUnitsTestCase(unittest.TestCase):
 

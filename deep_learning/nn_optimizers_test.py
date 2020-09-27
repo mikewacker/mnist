@@ -1,6 +1,6 @@
 import unittest
 import numpy.testing as npt
-import nn_optimizers
+from . import nn_optimizers
 
 import numpy as np
 

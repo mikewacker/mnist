@@ -1,10 +1,10 @@
 import unittest
 import numpy.testing as npt
-import nn_layers
+from . import nn_layers
 
 import numpy as np
 
-import gradient_checking
+from . import gradient_checking
 
 class NNLayersTestCase(unittest.TestCase):
 

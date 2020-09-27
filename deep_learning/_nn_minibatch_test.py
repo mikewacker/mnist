@@ -1,6 +1,6 @@
 import unittest
 import numpy.testing as npt
-import _nn_minibatch
+from . import _nn_minibatch
 
 import numpy as np
 

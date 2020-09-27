@@ -1,5 +1,5 @@
 import unittest
-import gradient_checking
+from . import gradient_checking
 
 import numpy as np
 

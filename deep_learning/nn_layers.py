@@ -1,7 +1,7 @@
 import numpy as np
 
-import _nn_units
-import _nn_activations
+from . import _nn_units
+from . import _nn_activations
 
 def dense(n_prev, n, *, activation="relu"):
     """Creates a dense, fully-connected layer.
