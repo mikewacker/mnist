@@ -135,7 +135,7 @@ def _sample_rows(*arrays, size):
     return tuple(array[indices] for array in arrays)
 
 ####
-# Visualizing images
+# Subplots layout
 ####
 
 def _create_images_subplots(m):
@@ -144,6 +144,37 @@ def _create_images_subplots(m):
     col_widths = (0.5, 0.5, 0.25, 0.5, 0.5, 0.25, 0.5, 0.5, 0.25, 0.5, 0.5)
     axs = _create_packed_subplots(num_rows, col_widths)
     return _remove_border_columns(axs, 2)
+
+def _create_performance_subplots():
+    """Creates the subplots to visualize the performance."""
+    figsize = (6, 6)
+    gridspec_kw = {"height_ratios": (2.5, 2.5, 0.5, 0.5)}
+    _, axs = plt.subplots(
+        4, 1, constrained_layout=True,
+        figsize=figsize, gridspec_kw=gridspec_kw)
+    return axs
+
+def _create_predictions_subplots(m):
+    """Creates the subplots to visualize m correct and incorrect predictions."""
+    col_widths = (0.5, 0.5, 0.5, 1.5, 0.25, 0.5, 0.5, 0.5, 1.5)
+    axs = _create_packed_subplots(m, col_widths)
+    return _remove_border_columns(axs, 4)
+
+def _generate_images_axs(axs):
+    """Generates the list of axes for each image."""
+    num_rows = axs.shape[0]
+    num_cols = axs.shape[1] // 2
+    for row in range(num_rows):
+        for col in range(num_cols):
+            col_offset = 2 * col
+            col_end = col_offset + 2
+            yield axs[row, col_offset:col_end]
+
+def _generate_predictions_axs(axs):
+    """Generates the list of axes for each pair of predictions."""
+    num_rows = axs.shape[0]
+    for row in range(num_rows):
+        yield axs[row, 0:4], axs[row, 4:8]
 
 def _create_packed_subplots(num_rows, col_widths):
     """Creates packed subplots."""
@@ -168,15 +199,9 @@ def _remove_border_columns(axs, col_size):
     data_indices = [col for col in range(num_cols) if col not in border_indices]
     return axs[:, data_indices]
 
-def _generate_images_axs(axs):
-    """Generates the list of axes for each image."""
-    num_rows = axs.shape[0]
-    num_cols = axs.shape[1] // 2
-    for row in range(num_rows):
-        for col in range(num_cols):
-            col_offset = 2 * col
-            col_end = col_offset + 2
-            yield axs[row, col_offset:col_end]
+####
+# Visualizing images
+####
 
 def _plot_image(ax, image):
     """Plots an image of a handwritten digit."""
@@ -197,15 +222,6 @@ def _plot_label(ax, label, color):
 ####
 # Visualizing performance
 ####
-
-def _create_performance_subplots():
-    """Creates the subplots to visualize the performance."""
-    figsize = (6, 6)
-    gridspec_kw = {"height_ratios": (2.5, 2.5, 0.5, 0.5)}
-    _, axs = plt.subplots(
-        4, 1, constrained_layout=True,
-        figsize=figsize, gridspec_kw=gridspec_kw)
-    return axs
 
 def _plot_accuracy(ax, title, min_acc, score, acc):
     """Plots the overall and per-digit accuracy."""
@@ -285,18 +301,6 @@ def _plot_error_part(ax, row, digit, offset, size):
 ####
 # Visualizing predictions
 ####
-
-def _create_predictions_subplots(m):
-    """Creates the subplots to visualize m correct and incorrect predictions."""
-    col_widths = (0.5, 0.5, 0.5, 1.5, 0.25, 0.5, 0.5, 0.5, 1.5)
-    axs = _create_packed_subplots(m, col_widths)
-    return _remove_border_columns(axs, 4)
-
-def _generate_predictions_axs(axs):
-    """Generates the list of axes for each pair of predictions."""
-    num_rows = axs.shape[0]
-    for row in range(num_rows):
-        yield axs[row, 0:4], axs[row, 4:8]
 
 def _plot_predicted_label(ax, label, pred):
     """Plots an "image" of the predicted label."""
