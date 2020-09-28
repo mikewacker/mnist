@@ -1,4 +1,5 @@
 import unittest
+import numpy.testing as npt
 from . import mnist
 
 import os
@@ -37,20 +38,15 @@ class MnistTestCase(unittest.TestCase):
     def testScorePredictions(self):
         _, y_true, y_pred, _ = self._loadPredictions()
         score, acc, cm = mnist.score_predictions(y_true, y_pred)
-
-        score_diff = np.abs(score - 0.9248)
-        self.assertLess(score_diff, 5e-5)
-
+        self.assertEqual(score, 0.9258)
         expected_acc = np.array([
             0.9786, 0.9789, 0.8973, 0.9079, 0.9308,
             0.8778, 0.9520, 0.9241, 0.8840, 0.9167,
         ])
-        acc_diff = np.abs(acc - expected_acc)
-        self.assertLess(np.max(acc_diff), 5e-5)
-
-        cm_sum = np.sum(cm, axis=1)
-        cm_diff = np.abs(cm_sum - 1)
-        self.assertLess(np.max(cm_diff), 1e-8)
+        npt.assert_almost_equal(acc, expected_acc, decimal=4)
+        self.assertEqual(cm[0, 6], 5)
+        self.assertEqual(cm[2, 2], 926)
+        self.assertEqual(cm[9, 8], 7)
 
     def testToPred(self):
         Y_prob = np.array([
@@ -58,16 +54,17 @@ class MnistTestCase(unittest.TestCase):
             [0.01, 0.05, 0.01, 0.01, 0.05, 0.01, 0.80, 0.05, 0.01, 0.05],
         ])
         y_pred = mnist.to_pred(Y_prob)
-        self.assertTrue((y_pred == np.array([1, 6])).all())
+        expected_y_pred = np.array([1, 6])
+        npt.assert_equal(y_pred, expected_y_pred)
 
     def testToOneHotProb(self):
         y_pred = np.array([2, 8])
         Y_prob = mnist.to_onehot_prob(y_pred)
-        Y_prob_expected = np.array([
-            [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        expected_Y_prob = np.array([
+            [0., 0., 1., 0., 0., 0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0., 0., 0., 0., 1., 0.],
         ])
-        self.assertTrue((Y_prob == Y_prob_expected).all())
+        npt.assert_equal(Y_prob, expected_Y_prob)
 
     ####
     # Visualizations

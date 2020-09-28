@@ -4,7 +4,6 @@ import math
 import os
 
 import numpy as np
-from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
 from . import idx
@@ -53,22 +52,20 @@ def preprocess_channel(X):
 def score_predictions(y_true, y_pred):
     """Scores the predictions with a single metric and more detailed metrics.
 
-    The single metric is accuracy as the macro-average of recall.
+    The single metric is accuracy.
 
     Args:
         y_true: true labels as a (m,) numpy array
         y_pred: predicted labels as a (m,) numpy array
 
     Returns:
-        score: accuracy as a macro-average of recall
+        score: overall accuracy
         acc: accuracy/recall for each digit as a (10,) numpy array
-        cm: row-normalized confusion matrix as a (10, 10) numpy array
+        cm: confusion matrix as a (10, 10) numpy array
     """
-    cm = confusion_matrix(y_true, y_pred)
-    cm_norm = np.sum(cm, axis=1, keepdims=True)
-    cm = cm / cm_norm
-    acc = cm[_DIGITS, _DIGITS]
-    score = np.mean(acc)
+    cm = _confusion_matrix(y_true, y_pred)
+    acc = cm[_DIGITS, _DIGITS] / np.sum(cm, axis=1)
+    score = np.mean(y_true == y_pred)
     return score, acc, cm
 
 def to_pred(Y_prob):
@@ -182,21 +179,31 @@ def show_predictions(
 # Data loading
 ####
 
-_X_TRAIN_PATH = "data/train-images-idx3-ubyte.gz"
-_X_TEST_PATH = "data/t10k-images-idx3-ubyte.gz"
-_Y_TRAIN_PATH = "data/train-labels-idx1-ubyte.gz"
-_Y_TEST_PATH = "data/t10k-labels-idx1-ubyte.gz"
+_X_TRAIN_PATH = "train-images-idx3-ubyte.gz"
+_X_TEST_PATH = "t10k-images-idx3-ubyte.gz"
+_Y_TRAIN_PATH = "train-labels-idx1-ubyte.gz"
+_Y_TEST_PATH = "t10k-labels-idx1-ubyte.gz"
 
-def _load_idx(path):
+def _load_idx(filename):
     """Loads a single IDX file."""
     dirname = os.path.dirname(__file__)
-    filename = os.path.join(dirname, path)
+    filename = os.path.join(dirname, "data", filename)
     with gzip.open(filename, "rb") as f:
         return idx.read_array(f)
 
 ####
 # Data processing
 ####
+
+def _confusion_matrix(y_true, y_pred):
+    """Generates a confusion matrix."""
+    cm = np.zeros((10, 10))
+    for true_digit in _DIGITS:
+        y_pred_digit = y_pred[y_true == true_digit]
+        digits, counts = np.unique(y_pred_digit, return_counts=True)
+        for digit, count in zip(digits, counts):
+            cm[true_digit, digit] = count
+    return cm
 
 def _filter_images(X, y, digits):
     """Filters the images based on the digit."""
