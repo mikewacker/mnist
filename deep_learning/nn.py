@@ -50,22 +50,25 @@ class NeuralNetwork(object):
 
     def train(
         self, X, y, *,
-        num_epochs, learning_rate, minibatch_size=0, progress_fn=None):
+        learning_rate, minibatch_size, num_epochs=1, weight_decay=0,
+        progress_fn=None):
         """Trains the network.
 
         Args:
             X: inputs as a (m, ...) numpy array
             y: true labels as a (m,) numpy array
-            num_epochs: number of epochs to train
             learning_rate: learning rate
             minibatch_size: mini-batch size, or 0 to use the entire batch
+            num_epochs: number of epochs to train
+            weight_decay: weight decay to apply at each step
             progress_fn: function invoked with the cost after each iteration
         """
         X = self._preprocess_input(X)
         Y = nn_layers.onehot_output(y, self._output)
         for _ in range(num_epochs):
             for X_mb, Y_mb in _nn_minibatch.minibatches(X, Y, minibatch_size):
-                self._train_minibatch(X_mb, Y_mb, learning_rate, progress_fn)
+                self._train_minibatch(
+                    X_mb, Y_mb, learning_rate, weight_decay, progress_fn)
 
     def predict(self, X):
         """Predicts the output labels.
@@ -101,12 +104,12 @@ class NeuralNetwork(object):
         nn_layers.check_input_shape(X, self._layers[0])
         return X
 
-    def _train_minibatch(self, X, Y, learning_rate, progress_fn):
+    def _train_minibatch(self, X, Y, learning_rate, weight_decay, progress_fn):
         """Trains a single mini-batch."""
         self._forward_train(X, Y)
         if progress_fn:
             progress_fn(self._output.cost)
-        self._backward(learning_rate)
+        self._backward(learning_rate, weight_decay)
 
     def _forward_train(self, A, Y):
         """Feeds the inputs forward for training."""
@@ -114,13 +117,14 @@ class NeuralNetwork(object):
         for layer in self._layers:
             A = layer.forward(A)
 
-    def _backward(self, learning_rate):
+    def _backward(self, learning_rate, weight_decay):
         """Performs back-propagation, also updating weights."""
         dA = None
         for index, layer in reversed(list(enumerate(self._layers))):
             chained = index > 0
             dA, grads = layer.backward(dA, chained)
-            self._optimizer.update_weights(index, layer, grads, learning_rate)
+            self._optimizer.update_weights(
+                index, layer, grads, learning_rate, weight_decay)
 
     def _forward_predict(self, A):
         """Feeds the inputs forward for predicting."""

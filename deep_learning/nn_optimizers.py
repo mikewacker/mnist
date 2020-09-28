@@ -67,15 +67,13 @@ class _Optimizer(object):
             for W_index, stepper in enumerate(layer_steppers):
                 self._save_stepper_state(nn_dict, index, W_index, stepper)
 
-    def update_weights(self, index, layer, grads, learning_rate):
+    def update_weights(self, index, layer, grads, learning_rate, weight_decay):
         """Updates the weights for a layer."""
         steppers = self._all_steppers[index]
-        weights = []
-        for stepper, W, dW in zip(steppers, layer.weights, grads):
-            step = stepper.step(dW)
-            W = W - learning_rate * step
-            weights.append(W)
-        layer.weights = tuple(weights)
+        steps = [stepper.step(dW) for stepper, dW in zip(steppers, grads)]
+        layer.weights = tuple(
+            (1 - learning_rate * weight_decay) * W - learning_rate * step
+            for W, step in zip(layer.weights, steps))
 
     def _init_layer_steppers(self, layer):
         """Initializes the steppers for a layer."""
@@ -85,28 +83,27 @@ class _Optimizer(object):
 
     def _load_stepper_state(self, nn_dict, index, W_index, stepper):
         """Loads the state for a stepper from a dictionary."""
-        state = []
-        for S_index, _ in enumerate(stepper.state):
-            key = self._state_key(index, W_index, S_index)
-            S = nn_dict.get(key, None)
-            self._check_loaded_S(key, S)
-            state.append(S)
-        stepper.state = tuple(state)
+        stepper.state = tuple(
+            self._load_S(nn_dict, index, W_index, S_index)
+            for S_index in range(len(stepper.state)))
 
-    def _check_loaded_S(self, key, S):
-        """Checks the state that was loaded."""
+    def _load_S(self, nn_dict, index, W_index, S_index):
+        """Loads a single state array."""
+        key = self._state_key(index, W_index, S_index)
+        S = nn_dict.get(key, None)
         if S is None:
             msg = "{:s} not found".format(key)
             raise ValueError(msg)
+        return S
 
     def _save_stepper_state(self, nn_dict, index, W_index, stepper):
         """Saves the state for a stepper to a dictionary."""
-        for S_index, S in enumerate(stepper.state):
-            key = self._state_key(index, W_index, S_index)
-            nn_dict[key] = S
+        nn_dict.update({
+            self._state_key(index, W_index, S_index): S
+            for S_index, S in enumerate(stepper.state)})
 
     def _state_key(self, index, W_index, S_index):
-        """Gets the dictionary key for the state."""
+        """Gets the dictionary key for the state array."""
         return "layer {:d}: optimizer-{:s}[{:d}][{:d}]".format(
             index + 1, self._name, W_index, S_index)
 

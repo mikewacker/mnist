@@ -17,8 +17,8 @@ class NNTestCase(unittest.TestCase):
         X_train, X_test, y_train, y_test = self._loadMnist1000()
 
         nn.train(
-            X_train, y_train,
-            num_epochs=2, learning_rate=0.001, minibatch_size=64)
+            X_train, y_train, num_epochs=2,
+            learning_rate=0.001, minibatch_size=64, weight_decay=0.0001)
         y_pred, Y_prob = nn.predict(X_test)
 
         acc = np.mean(y_test == y_pred)
@@ -31,7 +31,7 @@ class NNTestCase(unittest.TestCase):
 
         nn1.train(
             X_train, y_train,
-            num_epochs=1, learning_rate=0.001, minibatch_size=64)
+            learning_rate=0.001, minibatch_size=64, weight_decay=0.0001)
         with tempfile.NamedTemporaryFile() as tmp:
             with open(tmp.name, "wb") as f:
                 nn1.save(f)
@@ -41,14 +41,14 @@ class NNTestCase(unittest.TestCase):
         np.random.seed(875659)
         nn1.train(
             X_train, y_train,
-            num_epochs=1, learning_rate=0.001, minibatch_size=64)
+            learning_rate=0.001, minibatch_size=64, weight_decay=0.0001)
         y_pred1, Y_prob1 = nn1.predict(X_test)
         cost1 = nn1.cost(y_test)
 
         np.random.seed(875659)
         nn2.train(
             X_train, y_train,
-            num_epochs=1, learning_rate=0.001, minibatch_size=64)
+            learning_rate=0.001, minibatch_size=64, weight_decay=0.0001)
         y_pred2, Y_prob2 = nn2.predict(X_test)
         cost2 = nn2.cost(y_test)
 
