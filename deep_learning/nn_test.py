@@ -19,10 +19,22 @@ class NNTestCase(unittest.TestCase):
         nn.train(
             X_train, y_train, num_epochs=2,
             learning_rate=0.001, minibatch_size=64, weight_decay=0.0001)
-        y_pred, Y_prob = nn.predict(X_test)
+        y_pred, _ = nn.predict(X_test)
 
         acc = np.mean(y_test == y_pred)
         self.assertGreater(acc, 0.5)
+
+    def testNeuralNetwork_CompareToGolden(self):
+        nn = self._initNeuralNetwork()
+        X_train, X_test, y_train, y_test = self._loadMnist1000()
+
+        nn.train(
+            X_train, y_train, num_epochs=2,
+            learning_rate=0.001, minibatch_size=64, weight_decay=0.0001)
+        _, Y_prob = nn.predict(X_test)
+
+        expected_Y_prob = self._loadGoldenYProb()
+        npt.assert_equal(Y_prob, expected_Y_prob)
 
     def testNeuralNetwork_Persistence(self):
         nn1 = self._initNeuralNetwork()
@@ -72,7 +84,14 @@ class NNTestCase(unittest.TestCase):
         return X / 255
 
     def _loadMnist1000(self):
-        dirname = os.path.dirname(__file__)
-        filename = os.path.join(dirname, "testdata", "mnist1000.npz")
+        filename = self._getTestData("mnist1000.npz")
         data = np.load(filename)
         return [data[key] for key in ["X_train", "X_test", "y_train", "y_test"]]
+
+    def _loadGoldenYProb(self):
+        filename = self._getTestData("Y_prob.npy")
+        return np.load(filename)
+
+    def _getTestData(self, filename):
+        dirname = os.path.dirname(__file__)
+        return os.path.join(dirname, "testdata", filename)
