@@ -3,6 +3,23 @@ import struct
 
 import numpy as np
 
+def read_array(f):
+    """Reads a numpy array from a file object for an IDX file.
+
+    Args:
+        f: file-like object
+
+    Returns:
+        numpy array
+    """
+    dtype = _parse_dtype(f)
+    shape = _parse_shape(f)
+    return _parse_data(f, dtype, shape)
+
+####
+# Implementation
+####
+
 _DTYPE_TABLE = {
     0x08: np.uint8,
     0x09: np.int8,
@@ -11,12 +28,6 @@ _DTYPE_TABLE = {
     0x0D: np.float32,
     0x0E: np.float64,
 }
-
-def read_array(f):
-    """Reads a numpy array from a file object for an IDX file."""
-    dtype = _parse_dtype(f)
-    shape = _parse_shape(f)
-    return _parse_data(f, dtype, shape)
 
 def _parse_dtype(f):
     """Parses the dtype of the data."""
