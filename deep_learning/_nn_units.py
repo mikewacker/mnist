@@ -212,7 +212,7 @@ class _Convolution2D(_BaseUnit):
             A_prev_slice = A_prev[:, h1_prev:h2_prev, w1_prev:w2_prev, :]
             Z_slice = Z[:, h, w, :]
 
-            # Computer the convolution for the input slice.
+            # Compute the convolution for the input slice.
             A_prev_slice = A_prev_slice.reshape((*A_prev_slice.shape, 1))
             Z_slice[:] = np.sum(W * A_prev_slice, axis=(1,2,3)) + b
 
