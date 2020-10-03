@@ -25,6 +25,11 @@ class NeuralNetwork(object):
         self._output = output_layer
         self._optimizer = optimizer
 
+    @property
+    def num_params(self):
+        """Gets the number of trainable parameters."""
+        return sum(layer.num_params for layer in self._layers)
+
     def load(self, file):
         """Loads pre-trained weights from a file.
 

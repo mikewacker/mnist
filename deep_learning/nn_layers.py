@@ -154,6 +154,11 @@ class _ActivatedLayer(object):
         return self._unit.shape_out
 
     @property
+    def num_params(self):
+        """Gets the number of trainable parameters."""
+        return self._unit.num_params
+
+    @property
     def weights(self):
         """Gets the weights."""
         return self._unit.weights

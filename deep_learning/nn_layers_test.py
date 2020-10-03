@@ -18,36 +18,42 @@ class NNLayersTestCase(unittest.TestCase):
         layer = nn_layers.dense(10, 4)
         self.assertEqual(layer.shape_in, (10,))
         self.assertEqual(layer.shape_out, (4,))
+        self.assertEqual(layer.num_params, 44)
         self._testActivatedLayer_GradientCheck(layer)
 
     def testConvolution2DLayer(self):
         layer = nn_layers.convolution_2d(5, 5, 3, 6, kernel_size=3, padding=1)
         self.assertEqual(layer.shape_in, (5, 5, 3))
         self.assertEqual(layer.shape_out, (5, 5, 6))
+        self.assertEqual(layer.num_params, 168)
         self._testActivatedLayer_GradientCheck(layer)
 
     def testMaxPool2DLayer(self):
         layer = nn_layers.max_pool_2d(4, 4, 3, pool_size=2)
         self.assertEqual(layer.shape_in, (4, 4, 3))
         self.assertEqual(layer.shape_out, (2, 2, 3))
+        self.assertEqual(layer.num_params, 0)
         self._testActivatedLayer_GradientCheck(layer)
 
     def testFlattenLayer(self):
         layer = nn_layers.flatten((2, 2, 4))
         self.assertEqual(layer.shape_in, (2, 2, 4))
         self.assertEqual(layer.shape_out, (16,))
+        self.assertEqual(layer.num_params, 0)
         self._testActivatedLayer_GradientCheck(layer)
 
-    def testBinaryOutpuLayer(self):
+    def testBinaryOutputLayer(self):
         layer = nn_layers.binary_output(10)
         self.assertEqual(layer.shape_in, (10,))
         self.assertEqual(layer.shape_out, (1,))
+        self.assertEqual(layer.num_params, 11)
         self._testOutputLayer_GradientCheck(layer)
 
     def testMulticlassOutputLayer(self):
         layer = nn_layers.multiclass_output(10, 4)
         self.assertEqual(layer.shape_in, (10,))
         self.assertEqual(layer.shape_out, (4,))
+        self.assertEqual(layer.num_params, 44)
         self._testOutputLayer_GradientCheck(layer)
 
     def _testActivatedLayer_GradientCheck(self, layer):

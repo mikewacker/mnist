@@ -67,7 +67,7 @@ class _BaseUnit(object):
 
     @property
     def num_params(self):
-        """Gets the number of parameters."""
+        """Gets the number of trainable parameters."""
         return sum(
             np.prod(np.array(W.shape))
             for W in self.weights)

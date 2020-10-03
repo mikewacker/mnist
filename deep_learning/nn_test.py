@@ -14,6 +14,7 @@ class NNTestCase(unittest.TestCase):
 
     def testNeuralNetwork(self):
         nn = self._initNeuralNetwork()
+        self.assertEqual(nn.num_params, 266610)
         X_train, X_test, y_train, y_test = self._loadMnist1000()
 
         nn.train(
