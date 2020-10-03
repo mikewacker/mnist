@@ -14,6 +14,7 @@ class NNTestCase(unittest.TestCase):
 
     def testNeuralNetwork(self):
         nn = self._initNeuralNetwork()
+        self.assertEqual(nn.name, "nn2l")
         self.assertEqual(nn.num_params, 266610)
         X_train, X_test, y_train, y_test = self._loadMnist1000()
 
@@ -72,6 +73,7 @@ class NNTestCase(unittest.TestCase):
     def _initNeuralNetwork(self):
         np.random.seed(744502)
         return NeuralNetwork(
+            "nn2l",
             preprocess_fn=self._preprocessFlat,
             hidden_layers=[
                 nn_layers.dense(784, 300),

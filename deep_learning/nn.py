@@ -7,7 +7,8 @@ class NeuralNetwork(object):
     """Neural network for classification."""
 
     def __init__(
-        self, *, hidden_layers, output_layer, optimizer, preprocess_fn=None):
+        self, name, *,
+        hidden_layers, output_layer, optimizer, preprocess_fn=None):
         """Initalizes the neural network.
 
         Args:
@@ -20,10 +21,15 @@ class NeuralNetwork(object):
         nn_layers.check_layer_shapes(layers)
         optimizer.init_steppers(layers)
 
+        self._name = name
         self._preprocess_fn = preprocess_fn
         self._layers = layers
         self._output = output_layer
         self._optimizer = optimizer
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def num_params(self):
