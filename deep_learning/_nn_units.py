@@ -173,7 +173,7 @@ class _Dense(_BaseUnit):
     def _init_weights(n_prev, n):
         """Initializes the weights."""
         W_shape = (n_prev, n)
-        W = _glorot_normal_initialization(W_shape, n_prev, n)
+        W = _glorot_uniform_initialization(W_shape, n_prev, n)
         b = np.zeros((1, n))
         return W, b
 
@@ -270,7 +270,7 @@ class _Convolution2D(_BaseUnit):
         W_shape = (kernel_size, kernel_size, n_C_prev, n_C)
         fan_in = kernel_size * kernel_size * n_C_prev
         fan_out = n_C
-        W = _glorot_normal_initialization(W_shape, fan_in, fan_out)
+        W = _glorot_uniform_initialization(W_shape, fan_in, fan_out)
         b = np.zeros(n_C)
         return W, b
 
@@ -385,7 +385,7 @@ def _positions_2d(Z, filter_size, stride):
 # Weight initialization
 ####
 
-def _glorot_normal_initialization(shape, fan_in, fan_out):
+def _glorot_uniform_initialization(shape, fan_in, fan_out):
     """Initializes weights using Glorot normal initialization."""
-    std = np.sqrt(2 / (fan_in + fan_out))
-    return np.random.normal(0, std, shape)
+    limit = np.sqrt(6 / (fan_in + fan_out))
+    return np.random.uniform(-limit, limit, shape)

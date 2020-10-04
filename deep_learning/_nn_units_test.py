@@ -259,8 +259,8 @@ class NNUnitsTestCase(unittest.TestCase):
     # Weight initialization
     ####
 
-    def testGlorotNormalInitialization(self):
-        W = _nn_units._glorot_normal_initialization((500, 300), 500, 300)
+    def testGlorotUniformInitialization(self):
+        W = _nn_units._glorot_uniform_initialization((500, 300), 500, 300)
         self.assertEqual(W.shape, (500, 300))
         self.assertAlmostEqual(np.mean(W), 0, places=3)
         self.assertAlmostEqual(np.std(W), 0.05, places=3)
