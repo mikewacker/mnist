@@ -113,8 +113,8 @@ class EpochTracker(object):
         ax.set_xticks(epochs)
 
         # Plot the data.
-        ax.plot(epochs, train, label="Train")
-        ax.plot(epochs, test, label="Test")
+        ax.plot(epochs, train, label="Train", lw=1)
+        ax.plot(epochs, test, label="Test", lw=1)
         ax.legend()
 
 ####
