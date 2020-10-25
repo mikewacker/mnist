@@ -172,6 +172,7 @@ class _Output(object):
         else:
             prob = Y * A + (1 - Y) * (1 - A)
             prob = prob.reshape(-1)
+        prob = np.clip(prob, 1e-15, 1)
         loss = -np.log(prob)
         cost = np.mean(loss)
         return cost

@@ -3,6 +3,8 @@ import numpy.testing as npt
 from .testing import gradient_checking
 from . import _nn_activations
 
+import warnings
+
 import numpy as np
 
 class NNActivationsTestCase(unittest.TestCase):
@@ -95,6 +97,15 @@ class NNActivationsTestCase(unittest.TestCase):
         output = _nn_activations.multiclass_output(3)
         output.Y = np.array([[0., 1., 0.], [1., 0., 0.], [0., 0., 1.]])
         self._testOutput_GradientCheck(output)
+
+    def testOutput_CostClipping(self):
+        output = _nn_activations.binary_output()
+        output.Y = np.array([[1.]])
+        Z = np.array([[-1000]])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            output.forward(Z)
+        self.assertTrue(np.isfinite(output.cost))
 
     def testMulticlasOutputError_IllegalC(self):
         with self.assertRaises(ValueError):
