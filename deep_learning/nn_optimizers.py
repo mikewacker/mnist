@@ -70,10 +70,14 @@ class _Optimizer(object):
     def update_weights(self, index, layer, grads, learning_rate, weight_decay):
         """Updates the weights for a layer."""
         steppers = self._all_steppers[index]
-        steps = [stepper.step(dW) for stepper, dW in zip(steppers, grads)]
-        layer.weights = tuple(
-            (1 - learning_rate * weight_decay) * W - learning_rate * step
-            for W, step in zip(layer.weights, steps))
+        weights = []
+        for W, stepper, dW, regularize, in zip(
+                layer.weights, steppers, grads, layer.regularized):
+            step = stepper.step(dW)
+            W_factor = 1 - learning_rate * weight_decay if regularize else 1
+            W = W_factor * W - learning_rate * step
+            weights.append(W)
+        layer.weights = tuple(weights)
 
     def _init_layer_steppers(self, layer):
         """Initializes the steppers for a layer."""

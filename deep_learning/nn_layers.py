@@ -168,6 +168,11 @@ class _ActivatedLayer(object):
         """Sets the weights."""
         self._unit.weights = value
 
+    @property
+    def regularized(self):
+        """Gets whether each set of weights is regularized."""
+        return self._unit.regularized
+
     def load_weights(self, nn_dict, index):
         """Loads pre-trained weights from a dictionary."""
         self._unit.load_weights(nn_dict, index)

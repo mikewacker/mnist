@@ -47,13 +47,14 @@ Notes:
 
 class _BaseUnit(object):
 
-    def __init__(self, shape_in, shape_out, weights=()):
+    def __init__(self, shape_in, shape_out, weights=(), regularized=()):
         """Initializes the unit."""
         if type(weights) != tuple:
             raise ValueError("weights must be a tuple of numpy arrays")
         self._shape_in = (shape_in,) if np.isscalar(shape_in) else shape_in
         self._shape_out = (shape_out,) if np.isscalar(shape_out) else shape_out
         self._weights = weights
+        self._regularized = regularized
 
     @property
     def shape_in(self):
@@ -90,6 +91,11 @@ class _BaseUnit(object):
             name = self._weights_name(None, W_index)
             self._check_W_shape(name, W, W_prev)
         self._weights = value
+
+    @property
+    def regularized(self):
+        """Gets whether each set of weights is regularized."""
+        return self._regularized
 
     def load_weights(self, nn_dict, index):
         """Loads pre-trained weights from a dictionary."""
@@ -140,7 +146,8 @@ class _Dense(_BaseUnit):
         shape_in = (n_prev,)
         shape_out = (n,)
         weights = _Dense._init_weights(n_prev, n)
-        super().__init__(shape_in, shape_out, weights)
+        regularized = (True, False)
+        super().__init__(shape_in, shape_out, weights, regularized)
 
     def forward(self, A_prev):
         """Feeds the inputs forward."""
@@ -187,7 +194,8 @@ class _Convolution2D(_BaseUnit):
         shape_out = _Convolution2D._get_shape_out(
             n_H_prev, n_W_prev, n_C, kernel_size, stride, padding)
         weights = _Convolution2D._init_weights(n_C_prev, n_C, kernel_size)
-        super().__init__(shape_in, shape_out, weights)
+        regularized = (True, False)
+        super().__init__(shape_in, shape_out, weights, regularized)
 
         self._f = kernel_size
         self._s = stride

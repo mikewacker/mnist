@@ -166,6 +166,10 @@ class NNLayersTestCase(unittest.TestCase):
     # Layer composition
     ####
 
+    def testActivatedLayer_Regularized(self):
+        layer = nn_layers.dense(10, 4)
+        self.assertEqual(layer.regularized, (True, False))
+
     def testActivatedLayer_Persistence(self):
         layer = nn_layers.dense(10, 4)
         nn_dict = {}

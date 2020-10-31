@@ -17,7 +17,7 @@ class NNUnitsTestCase(unittest.TestCase):
     def testBaseUnit_Properties(self):
         W = np.zeros((3, 3, 3, 6))
         b = np.zeros((1, 1, 1, 6))
-        unit = _nn_units._BaseUnit((5, 5, 3), (3, 3, 6), (W, b))
+        unit = _nn_units._BaseUnit((5, 5, 3), (3, 3, 6), (W, b), (True, False))
 
         self.assertEqual(unit.shape_in, (5, 5, 3))
         self.assertEqual(unit.shape_out, (3, 3, 6))
@@ -25,6 +25,7 @@ class NNUnitsTestCase(unittest.TestCase):
         self.assertEqual(len(unit.weights), 2)
         self.assertEqual(unit.weights[0].shape, (3, 3, 3, 6))
         self.assertEqual(unit.weights[1].shape, (1, 1, 1, 6))
+        self.assertEqual(unit.regularized, (True, False))
 
     def testBaseUnit_Properties_NoWeights(self):
         unit = _nn_units._BaseUnit((3, 3, 6), 54)
@@ -32,7 +33,8 @@ class NNUnitsTestCase(unittest.TestCase):
         self.assertEqual(unit.shape_in, (3, 3, 6))
         self.assertEqual(unit.shape_out, (54,))
         self.assertEqual(unit.num_params, 0)
-        self.assertEqual(len(unit.weights), 0)
+        self.assertEqual(unit.weights, ())
+        self.assertEqual(unit.regularized, ())
 
     def testBaseUnit_SetWeights(self):
         W_0 = np.zeros((4, 2))

@@ -49,6 +49,18 @@ class NNOptimizersTestCase(unittest.TestCase):
         expected_W = (1 - 0.01 * 0.0001) * W_prev - 0.01 * dW
         npt.assert_almost_equal(layer.weights[0], expected_W)
 
+    def testOptimizer_WeightDecay_Unregularized(self):
+        optimizer = nn_optimizers.gradient_descent()
+        layer = MockLayer(False)
+        optimizer.init_steppers([layer])
+
+        dW, _, _ = self._createGradients()
+        W_prev = layer.weights[0]
+        optimizer.update_weights(0, layer, (dW,), 0.01, 0.0001)
+
+        expected_W = W_prev - 0.01 * dW
+        npt.assert_almost_equal(layer.weights[0], expected_W)
+
     def testOptimizer_Persistence(self):
         optimizer1 = nn_optimizers.adam()
         optimizer2 = nn_optimizers.adam()
@@ -152,6 +164,7 @@ class NNOptimizersTestCase(unittest.TestCase):
 
 class MockLayer(object):
 
-    def __init__(self):
+    def __init__(self, regularize=True):
         W = np.array([[2., 3.], [4., 1.]])
         self.weights = (W,)
+        self.regularized = (regularize,)
