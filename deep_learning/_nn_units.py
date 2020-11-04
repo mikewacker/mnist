@@ -194,7 +194,7 @@ class _Convolution2D(_BaseUnit):
         shape_out = _Convolution2D._get_shape_out(
             n_H_prev, n_W_prev, n_C, kernel_size, stride, padding)
         weights = _Convolution2D._init_weights(n_C_prev, n_C, kernel_size)
-        regularized = (True, False)
+        regularized = (False, False)
         super().__init__(shape_in, shape_out, weights, regularized)
 
         self._f = kernel_size
