@@ -15,7 +15,7 @@ def check(cost_fn, grads_fn, *arrays):
 
     Args:
         cost_fn: computes the cost from the numpy arrays
-        grads_fn: computes the actuals gradients from the numpy arrays
+        grads_fn: computes the actual gradients from the numpy arrays
         arrays: numpy arrays to run the check with
 
     Returns:
